@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-type authInput struct {
+type authInputDTO struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
-	var input authInput
+	var input authInputDTO
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		respondError(w, http.StatusBadRequest, "неверный формат JSON")
@@ -25,8 +25,8 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "email не может быть пустым")
 		return
 	}
-	if len(input.Password) < 6 {
-		respondError(w, http.StatusBadRequest, "пароль должен содержать минимум 6 символов")
+	if len(input.Password) < 8 {
+		respondError(w, http.StatusBadRequest, "пароль должен содержать минимум 8 символов")
 		return
 	}
 
@@ -35,7 +35,7 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-
+	
 	respondJSON(w, http.StatusCreated, map[string]string{
 		"message": "Регистрация прошла успешно. Ожидайте подтверждения от менеджера.",
 	})
@@ -43,7 +43,7 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 
 
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
-	var input authInput
+	var input authInputDTO
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		respondError(w, http.StatusBadRequest, "неверный формат JSON")
