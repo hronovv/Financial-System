@@ -9,12 +9,17 @@ type AuthService interface {
 	SignIn(email, password string) (string, error)
 }
 
+type BankService interface {
+}
+
 type Services struct {
 	Auth AuthService
+	Bank BankService
 }
 
 func NewServices(deps *repository.Repositories) *Services {
 	return &Services{
 		Auth: NewAuthService(deps.User),
+		Bank: nil,
 	}
 }
