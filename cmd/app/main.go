@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"financial_system/internal/config"
-	"financial_system/internal/repository/postgres"
+	"financial_system/internal/repository"
+	"financial_system/internal/service"
+	"financial_system/internal/transport/rest"
 	"financial_system/pkg/database"
 	"log"
+	"net/http"
 )
 
 func main() {
@@ -23,6 +26,20 @@ func main() {
 	defer dbPool.Close()
 
 	log.Println("Connected to db!")
-	repos := postgres.NewRepository(dbPool)
-	
+	repos := repository.NewRepositories(dbPool)
+
+	services := service.NewServices(repos)
+
+	handlers := rest.NewHandler(services)
+
+
+	srv := &http.Server{
+		Addr:    ":" + cfg.HTTPServer.Address, 
+		Handler: handlers.InitRoutes(), 
+	}
+
+	log.Printf("Сервер запущен на порту %s", cfg.HTTPServer.Address)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Ошибка при запуске сервера: %s", err)
+	}
 }

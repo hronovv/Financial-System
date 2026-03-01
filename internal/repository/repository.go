@@ -5,7 +5,7 @@ import (
 )
 
 type Repositories struct {
-	// User domain.UserRepository 
+	// User domain.UserRepository
 }
 
 func NewRepositories(db *pgxpool.Pool) *Repositories {
