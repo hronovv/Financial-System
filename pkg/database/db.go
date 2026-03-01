@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-
 type ConnectionInfo struct {
 	Host     string
 	Port     string
