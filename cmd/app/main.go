@@ -10,6 +10,11 @@ import (
 	"log"
 	"net/http"
 )
+// @title           Financial System API
+// @version         1.0
+// @description     API для управления финансами
+// @host            localhost:8080
+// @BasePath        /
 
 func main() {
 	cfg := config.MustLoad()

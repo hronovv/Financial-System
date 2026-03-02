@@ -35,12 +35,11 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	respondJSON(w, http.StatusCreated, map[string]string{
 		"message": "Регистрация прошла успешно. Ожидайте подтверждения от менеджера.",
 	})
 }
-
 
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	var input authInputDTO

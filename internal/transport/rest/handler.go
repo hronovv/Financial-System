@@ -4,7 +4,10 @@ import (
 	"financial_system/internal/service"
 	"net/http"
 
+	// _ "financial_system/cmd/app/docs"
+
 	"github.com/gorilla/mux"
+	// httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Handler struct {
@@ -25,10 +28,11 @@ func (h *Handler) InitRoutes() *mux.Router {
 			w.Header().Add("Content-Type", "application/json")
 			next.ServeHTTP(w, r)
 		})
-	})	
+	})
 
 	// auth section
 	auth := router.PathPrefix("/auth").Subrouter()
+
 	auth.HandleFunc("/sign-up", h.signUp).Methods(http.MethodPost)
 	auth.HandleFunc("/sign-in", h.signIn).Methods(http.MethodPost)
 
@@ -36,7 +40,7 @@ func (h *Handler) InitRoutes() *mux.Router {
 	client := router.PathPrefix("/client").Subrouter()
 	// client.Use(h.authMiddleware("client")) // <- TODO: ADD JWT
 
-	client.HandleFunc("/banks",h.getBanks).Methods(http.MethodGet)
+	client.HandleFunc("/banks", h.getBanks).Methods(http.MethodGet)
 	client.HandleFunc("/enterprises", h.getEnterprises).Methods(http.MethodGet)
 
 	client.HandleFunc("/accounts", h.openAccount).Methods(http.MethodPost)
@@ -70,10 +74,11 @@ func (h *Handler) InitRoutes() *mux.Router {
 	// admin section
 	admin := router.PathPrefix("/admin").Subrouter()
 	// admin.Use(h.authMiddleware("admin")) // TODO: ADD JWT
-	
+
 	admin.HandleFunc("/logs", h.getAllLogs).Methods(http.MethodGet)
 	admin.HandleFunc("/logs/{id:[0-9]+}/undo", h.undoAction).Methods(http.MethodPost)
 
+	// router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	return router
 }

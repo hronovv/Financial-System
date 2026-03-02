@@ -11,3 +11,12 @@ migrate-down:
 
 service-run:
 	@go run ./cmd/app/main.go
+
+# swagger-init:
+# 	@echo "Generating Swagger docs..."
+# 	@swag init \
+# 		-g ./cmd/app/main.go \      
+# 		-d ./cmd/app,./internal \   
+# 		-o ./cmd/app/docs \        
+# 		--parseDependency          
+# 	@echo "Swagger docs generated in ./cmd/app/docs"
