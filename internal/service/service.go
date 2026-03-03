@@ -1,6 +1,7 @@
 package service
 
 import (
+	"financial_system/internal/domain"
 	"financial_system/internal/repository"
 )
 
@@ -10,6 +11,7 @@ type AuthService interface {
 }
 
 type BankService interface {
+	GetBanks() ([]domain.Bank, error)
 }
 
 type Services struct {
@@ -20,6 +22,6 @@ type Services struct {
 func NewServices(deps *repository.Repositories) *Services {
 	return &Services{
 		Auth: NewAuthService(deps.User),
-		Bank: nil,
+		Bank: NewBankService(deps.Bank),
 	}
 }

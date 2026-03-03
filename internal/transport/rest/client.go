@@ -3,7 +3,13 @@ package rest
 import "net/http"
 
 func (h *Handler) getBanks(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	banks, err := h.services.Bank.GetBanks()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Не удалось получить список банков")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, banks)
 }
 
 func (h *Handler) getEnterprises(w http.ResponseWriter, r *http.Request) {

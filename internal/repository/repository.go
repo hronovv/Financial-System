@@ -14,10 +14,16 @@ type UserRepository interface {
 
 type Repositories struct {
 	User UserRepository
+	Bank BankRepository
 }
 
 func NewRepositories(db *pgxpool.Pool) *Repositories {
 	return &Repositories{
 		User: postgres.NewUserRepo(db),
+		Bank: postgres.NewBankRepo(db),
 	}
+}
+
+type BankRepository interface {
+	GetAllBanks() ([]domain.Bank, error)
 }
