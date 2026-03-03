@@ -22,6 +22,8 @@ type EnterpriseRepository interface {
 
 type AccountRepository interface {
 	CreateAccount(account *domain.Account) error
+	GetAccountByID(id int) (*domain.Account, error)
+	SetAccountBlocked(id int, blocked bool) error
 }
 
 type Repositories struct {

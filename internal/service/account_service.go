@@ -39,6 +39,29 @@ func (s *Account) OpenAccount(userID, bankID int) (*domain.Account, error) {
 	return account, nil
 }
 
+// CloseAccount помечает счет как заблокированный.
+// TODO: userID должен браться из JWT, а не из тела запроса.
+func (s *Account) CloseAccount(userID, accountID int) error {
+	acc, err := s.repo.GetAccountByID(accountID)
+	if err != nil {
+		return err
+	}
+
+	if acc.UserID != userID {
+		return domain.ErrForbidden
+	}
+
+	if acc.IsBlocked {
+		return domain.ErrAccountAlreadyClosed
+	}
+
+	if acc.Balance != 0 {
+		return domain.ErrAccountHasNonZeroBalance
+	}
+
+	return s.repo.SetAccountBlocked(accountID, true)
+}
+
 func generateAccountNumber() (string, error) {
 	const length = 16
 	const digits = "0123456789"

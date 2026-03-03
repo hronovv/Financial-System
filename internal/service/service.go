@@ -20,6 +20,7 @@ type EnterpriseService interface {
 
 type AccountService interface {
 	OpenAccount(userID, bankID int) (*domain.Account, error)
+	CloseAccount(userID, accountID int) error
 }
 
 type Services struct {
