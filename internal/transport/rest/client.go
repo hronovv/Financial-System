@@ -110,7 +110,54 @@ func (h *Handler) closeAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) transferFromAccount(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	var input struct {
+		// TODO: user_id в будущем нужно будет получать из JWT, а не из тела запроса.
+		UserID         int      `json:"user_id"`
+		FromAccountID  int      `json:"from_account_id"`
+		ToAccountID    *int     `json:"to_account_id,omitempty"`
+		ToDepositID    *int     `json:"to_deposit_id,omitempty"`
+		Amount         float64  `json:"amount"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "неверный формат JSON")
+		return
+	}
+	defer r.Body.Close()
+
+	if input.UserID <= 0 {
+		respondError(w, http.StatusBadRequest, "user_id должен быть положительным числом")
+		return
+	}
+	if input.FromAccountID <= 0 {
+		respondError(w, http.StatusBadRequest, "from_account_id должен быть положительным числом")
+		return
+	}
+	if input.Amount <= 0 {
+		respondError(w, http.StatusBadRequest, "amount должен быть больше 0")
+		return
+	}
+
+	err := h.services.Account.TransferFromAccount(input.UserID, input.FromAccountID, input.ToAccountID, input.ToDepositID, input.Amount)
+	if err != nil {
+		switch err {
+		case domain.ErrInvalidAmount, domain.ErrInvalidTransferTarget:
+			respondError(w, http.StatusBadRequest, "неверные параметры перевода")
+		case domain.ErrForbidden:
+			respondError(w, http.StatusForbidden, "недостаточно прав")
+		case domain.ErrInsufficientFunds:
+			respondError(w, http.StatusBadRequest, "недостаточно средств")
+		case domain.ErrAccountBlocked, domain.ErrDepositBlocked:
+			respondError(w, http.StatusBadRequest, "счет/вклад заблокирован")
+		case domain.ErrNotFound:
+			respondError(w, http.StatusNotFound, "счет/вклад не найден")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось выполнить перевод")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) getAccountHistory(w http.ResponseWriter, r *http.Request) {

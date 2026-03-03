@@ -24,6 +24,8 @@ type AccountRepository interface {
 	CreateAccount(account *domain.Account) error
 	GetAccountByID(id int) (*domain.Account, error)
 	SetAccountBlocked(id int, blocked bool) error
+	TransferAccountToAccount(userID, fromAccountID, toAccountID int, amount float64) error
+	TransferAccountToDeposit(userID, fromAccountID, toDepositID int, amount float64) error
 }
 
 type Repositories struct {

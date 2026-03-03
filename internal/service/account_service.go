@@ -62,6 +62,27 @@ func (s *Account) CloseAccount(userID, accountID int) error {
 	return s.repo.SetAccountBlocked(accountID, true)
 }
 
+// TransferFromAccount переводит деньги со счета на другой счет или вклад (внутри одного пользователя).
+// TODO: userID должен браться из JWT, а не из тела запроса.
+func (s *Account) TransferFromAccount(userID, fromAccountID int, toAccountID, toDepositID *int, amount float64) error {
+	if amount <= 0 {
+		return domain.ErrInvalidAmount
+	}
+
+	hasToAccount := toAccountID != nil && *toAccountID > 0
+	hasToDeposit := toDepositID != nil && *toDepositID > 0
+
+	if hasToAccount == hasToDeposit {
+		return domain.ErrInvalidTransferTarget
+	}
+
+	if hasToAccount {
+		return s.repo.TransferAccountToAccount(userID, fromAccountID, *toAccountID, amount)
+	}
+
+	return s.repo.TransferAccountToDeposit(userID, fromAccountID, *toDepositID, amount)
+}
+
 func generateAccountNumber() (string, error) {
 	const length = 16
 	const digits = "0123456789"

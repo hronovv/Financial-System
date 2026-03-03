@@ -21,6 +21,7 @@ type EnterpriseService interface {
 type AccountService interface {
 	OpenAccount(userID, bankID int) (*domain.Account, error)
 	CloseAccount(userID, accountID int) error
+	TransferFromAccount(userID, fromAccountID int, toAccountID, toDepositID *int, amount float64) error
 }
 
 type Services struct {
