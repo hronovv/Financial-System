@@ -18,10 +18,15 @@ type EnterpriseService interface {
 	GetEnterprises() ([]domain.Enterprise, error)
 }
 
+type AccountService interface {
+	OpenAccount(userID, bankID int) (*domain.Account, error)
+}
+
 type Services struct {
 	Auth        AuthService
 	Bank        BankService
 	Enterprise  EnterpriseService
+	Account     AccountService
 }
 
 func NewServices(deps *repository.Repositories) *Services {
@@ -29,5 +34,6 @@ func NewServices(deps *repository.Repositories) *Services {
 		Auth:       NewAuthService(deps.User),
 		Bank:       NewBankService(deps.Bank),
 		Enterprise: NewEnterpriseService(deps.Enterprise),
+		Account:    NewAccountService(deps.Account),
 	}
 }

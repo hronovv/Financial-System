@@ -20,10 +20,15 @@ type EnterpriseRepository interface {
 	GetAllEnterprises() ([]domain.Enterprise, error)
 }
 
+type AccountRepository interface {
+	CreateAccount(account *domain.Account) error
+}
+
 type Repositories struct {
 	User        UserRepository
 	Bank        BankRepository
 	Enterprise  EnterpriseRepository
+	Account     AccountRepository
 }
 
 func NewRepositories(db *pgxpool.Pool) *Repositories {
@@ -31,5 +36,6 @@ func NewRepositories(db *pgxpool.Pool) *Repositories {
 		User:       postgres.NewUserRepo(db),
 		Bank:       postgres.NewBankRepo(db),
 		Enterprise: postgres.NewEnterpriseRepo(db),
+		Account:    postgres.NewAccountRepo(db),
 	}
 }

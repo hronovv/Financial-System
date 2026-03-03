@@ -1,6 +1,9 @@
 package rest
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 func (h *Handler) getBanks(w http.ResponseWriter, r *http.Request) {
 	banks, err := h.services.Bank.GetBanks()
@@ -23,7 +26,34 @@ func (h *Handler) getEnterprises(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) openAccount(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	var input struct {
+		// TODO: user_id в будущем нужно будет получать из JWT, а не из тела запроса.
+		UserID int `json:"user_id"`
+		BankID int `json:"bank_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "неверный формат JSON")
+		return
+	}
+	defer r.Body.Close()
+
+	if input.UserID <= 0 {
+		respondError(w, http.StatusBadRequest, "user_id должен быть положительным числом")
+		return
+	}
+	if input.BankID <= 0 {
+		respondError(w, http.StatusBadRequest, "bank_id должен быть положительным числом")
+		return
+	}
+
+	account, err := h.services.Account.OpenAccount(input.UserID, input.BankID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "не удалось открыть счет")
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, account)
 }
 
 func (h *Handler) closeAccount(w http.ResponseWriter, r *http.Request) {
