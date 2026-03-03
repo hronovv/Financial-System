@@ -5,7 +5,7 @@ import "net/http"
 func (h *Handler) getBanks(w http.ResponseWriter, r *http.Request) {
 	banks, err := h.services.Bank.GetBanks()
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Не удалось получить список банков")
+		respondError(w, http.StatusInternalServerError, "не удалось получить список банков")
 		return
 	}
 
@@ -13,7 +13,13 @@ func (h *Handler) getBanks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getEnterprises(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	enterprises, err := h.services.Enterprise.GetEnterprises()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "не удалось получить список предприятий")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, enterprises)
 }
 
 func (h *Handler) openAccount(w http.ResponseWriter, r *http.Request) {

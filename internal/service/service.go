@@ -14,14 +14,20 @@ type BankService interface {
 	GetBanks() ([]domain.Bank, error)
 }
 
+type EnterpriseService interface {
+	GetEnterprises() ([]domain.Enterprise, error)
+}
+
 type Services struct {
-	Auth AuthService
-	Bank BankService
+	Auth        AuthService
+	Bank        BankService
+	Enterprise  EnterpriseService
 }
 
 func NewServices(deps *repository.Repositories) *Services {
 	return &Services{
-		Auth: NewAuthService(deps.User),
-		Bank: NewBankService(deps.Bank),
+		Auth:       NewAuthService(deps.User),
+		Bank:       NewBankService(deps.Bank),
+		Enterprise: NewEnterpriseService(deps.Enterprise),
 	}
 }

@@ -12,18 +12,24 @@ type UserRepository interface {
 	GetUserByEmail(email string) (*domain.User, error)
 }
 
+type BankRepository interface {
+	GetAllBanks() ([]domain.Bank, error)
+}
+
+type EnterpriseRepository interface {
+	GetAllEnterprises() ([]domain.Enterprise, error)
+}
+
 type Repositories struct {
-	User UserRepository
-	Bank BankRepository
+	User        UserRepository
+	Bank        BankRepository
+	Enterprise  EnterpriseRepository
 }
 
 func NewRepositories(db *pgxpool.Pool) *Repositories {
 	return &Repositories{
-		User: postgres.NewUserRepo(db),
-		Bank: postgres.NewBankRepo(db),
+		User:       postgres.NewUserRepo(db),
+		Bank:       postgres.NewBankRepo(db),
+		Enterprise: postgres.NewEnterpriseRepo(db),
 	}
-}
-
-type BankRepository interface {
-	GetAllBanks() ([]domain.Bank, error)
 }
