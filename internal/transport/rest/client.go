@@ -161,7 +161,41 @@ func (h *Handler) transferFromAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getAccountHistory(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	// TODO: user_id в будущем нужно будет получать из JWT, а не из параметров запроса.
+	userIDStr := r.URL.Query().Get("user_id")
+	accountIDStr := r.URL.Query().Get("account_id")
+
+	if userIDStr == "" || accountIDStr == "" {
+		respondError(w, http.StatusBadRequest, "параметры user_id и account_id обязательны")
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil || userID <= 0 {
+		respondError(w, http.StatusBadRequest, "user_id должен быть положительным числом")
+		return
+	}
+
+	accountID, err := strconv.Atoi(accountIDStr)
+	if err != nil || accountID <= 0 {
+		respondError(w, http.StatusBadRequest, "account_id должен быть положительным числом")
+		return
+	}
+
+	history, err := h.services.Account.GetAccountHistory(userID, accountID)
+	if err != nil {
+		switch err {
+		case domain.ErrForbidden:
+			respondError(w, http.StatusForbidden, "недостаточно прав для просмотра истории этого счета")
+		case domain.ErrNotFound:
+			respondError(w, http.StatusNotFound, "счет не найден")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось получить историю счета")
+		}
+		return
+	}
+
+	respondJSON(w, http.StatusOK, history)
 }
 
 func (h *Handler) openDeposit(w http.ResponseWriter, r *http.Request) {

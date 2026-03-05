@@ -26,6 +26,7 @@ type AccountRepository interface {
 	SetAccountBlocked(id int, blocked bool) error
 	TransferAccountToAccount(userID, fromAccountID, toAccountID int, amount float64) error
 	TransferAccountToDeposit(userID, fromAccountID, toDepositID int, amount float64) error
+	GetAccountHistory(accountID int) ([]domain.Transaction, error)
 }
 
 type Repositories struct {

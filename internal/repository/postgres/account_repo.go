@@ -223,3 +223,44 @@ func (r *AccountRepo) TransferAccountToDeposit(userID, fromAccountID, toDepositI
 	return tx.Commit(ctx)
 }
 
+func (r *AccountRepo) GetAccountHistory(accountID int) ([]domain.Transaction, error) {
+	ctx := context.Background()
+
+	rows, err := r.db.Query(ctx, `
+		SELECT id, from_account_id, from_deposit_id, to_account_id, to_deposit_id, amount, transaction_type, created_at
+		FROM transactions
+		WHERE from_account_id = $1 OR to_account_id = $1
+		ORDER BY created_at DESC
+	`, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var history []domain.Transaction
+
+	for rows.Next() {
+		var t domain.Transaction
+		if err := rows.Scan(
+			&t.ID,
+			&t.FromAccountID,
+			&t.FromDepositID,
+			&t.ToAccountID,
+			&t.ToDepositID,
+			&t.Amount,
+			&t.Type,
+			&t.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		history = append(history, t)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return history, nil
+}
+
+

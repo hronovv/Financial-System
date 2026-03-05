@@ -83,6 +83,21 @@ func (s *Account) TransferFromAccount(userID, fromAccountID int, toAccountID, to
 	return s.repo.TransferAccountToDeposit(userID, fromAccountID, *toDepositID, amount)
 }
 
+// GetAccountHistory возвращает историю операций по счету пользователя.
+// TODO: userID должен браться из JWT, а не из запроса.
+func (s *Account) GetAccountHistory(userID, accountID int) ([]domain.Transaction, error) {
+	acc, err := s.repo.GetAccountByID(accountID)
+	if err != nil {
+		return nil, err
+	}
+
+	if acc.UserID != userID {
+		return nil, domain.ErrForbidden
+	}
+
+	return s.repo.GetAccountHistory(accountID)
+}
+
 func generateAccountNumber() (string, error) {
 	const length = 16
 	const digits = "0123456789"
