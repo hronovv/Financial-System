@@ -37,24 +37,35 @@ type ManagerService interface {
 	GetUserHistory(userID int) ([]domain.Transaction, error)
 	BlockAccount(accountID int) error
 	UnblockAccount(accountID int) error
+	GetEnterprisesWithEmployees() ([]domain.EnterpriseWithEmployees, error)
+	AddEmployee(enterpriseID, userID int) error
+	RemoveEmployee(enterpriseID, userID int) error
+	ApproveSalaryApplication(applicationID int) error
+}
+
+type SalaryProjectService interface {
+	ApplyForSalaryProject(userID, enterpriseID int, amount float64) (*domain.SalaryApplication, error)
+	ReceiveSalary(userID, applicationID int, toAccountID, toDepositID *int) error
 }
 
 type Services struct {
-	Auth        AuthService
-	Bank        BankService
-	Enterprise  EnterpriseService
-	Account     AccountService
-	Deposit     DepositService
-	Manager     ManagerService
+	Auth          AuthService
+	Bank          BankService
+	Enterprise    EnterpriseService
+	Account       AccountService
+	Deposit       DepositService
+	Manager       ManagerService
+	SalaryProject SalaryProjectService
 }
 
 func NewServices(deps *repository.Repositories, jwtSecret string, jwtExpire time.Duration) *Services {
 	return &Services{
-		Auth:       NewAuthService(deps.User, jwtSecret, jwtExpire),
-		Bank:       NewBankService(deps.Bank),
-		Enterprise: NewEnterpriseService(deps.Enterprise),
-		Account:    NewAccountService(deps.Account),
-		Deposit:    NewDepositService(deps.Deposit),
-		Manager:    NewManagerService(deps.User, deps.Account),
+		Auth:          NewAuthService(deps.User, jwtSecret, jwtExpire),
+		Bank:          NewBankService(deps.Bank),
+		Enterprise:    NewEnterpriseService(deps.Enterprise),
+		Account:       NewAccountService(deps.Account),
+		Deposit:       NewDepositService(deps.Deposit),
+		Manager:       NewManagerService(deps.User, deps.Account, deps.Enterprise, deps.SalaryApplication),
+		SalaryProject: NewSalaryProjectService(deps.Enterprise, deps.SalaryApplication),
 	}
 }

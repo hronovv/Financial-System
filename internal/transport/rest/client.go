@@ -29,6 +29,19 @@ type transferFromAccountRequest struct {
 	Amount        float64 `json:"amount" example:"100.50"`
 }
 
+// applySalaryProjectRequest тело запроса POST /client/salary-project/apply
+type applySalaryProjectRequest struct {
+	EnterpriseID int     `json:"enterprise_id" example:"1"`
+	Amount       float64 `json:"amount" example:"50000"`
+}
+
+// receiveSalaryRequest тело запроса POST /client/salary-project/receive
+type receiveSalaryRequest struct {
+	ApplicationID int  `json:"application_id" example:"1"`
+	ToAccountID   *int `json:"to_account_id,omitempty" example:"5"`
+	ToDepositID   *int `json:"to_deposit_id,omitempty" example:"2"`
+}
+
 // getBanks godoc
 // @Summary      Список банков
 // @Description  Возвращает все банки системы. Требуется роль client и JWT.
@@ -386,20 +399,114 @@ func (h *Handler) accumulateDeposit(w http.ResponseWriter, r *http.Request) {
 
 // applyForSalaryProject godoc
 // @Summary      Подать заявку на зарплатный проект
+// @Description  Создаёт заявку со статусом pending. Только сотрудник предприятия может подать заявку.
 // @Tags         client
 // @Security     BearerAuth
 // @Accept       json
+// @Param        body  body  applySalaryProjectRequest  true  "enterprise_id, amount"
+// @Success      201  {object}  domain.SalaryApplication
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /client/salary-project/apply [post]
 func (h *Handler) applyForSalaryProject(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	userID := userIDFromRequest(r)
+	if userID == 0 {
+		respondError(w, http.StatusUnauthorized, "требуется авторизация")
+		return
+	}
+
+	var input applySalaryProjectRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "неверный формат JSON")
+		return
+	}
+	defer r.Body.Close()
+
+	if input.EnterpriseID <= 0 {
+		respondError(w, http.StatusBadRequest, "enterprise_id должен быть положительным числом")
+		return
+	}
+	if input.Amount <= 0 {
+		respondError(w, http.StatusBadRequest, "amount должен быть больше 0")
+		return
+	}
+
+	app, err := h.services.SalaryProject.ApplyForSalaryProject(userID, input.EnterpriseID, input.Amount)
+	if err != nil {
+		switch err {
+		case domain.ErrNotEmployee:
+			respondError(w, http.StatusForbidden, "вы не являетесь сотрудником этого предприятия")
+		case domain.ErrNotFound:
+			respondError(w, http.StatusNotFound, "предприятие не найдено")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось подать заявку")
+		}
+		return
+	}
+
+	respondJSON(w, http.StatusCreated, app)
 }
 
 // receiveSalary godoc
 // @Summary      Получить зарплату
+// @Description  Зачисляет зарплату по одобренной заявке на указанный счёт или вклад (один из to_account_id, to_deposit_id обязателен).
 // @Tags         client
 // @Security     BearerAuth
 // @Accept       json
+// @Param        body  body  receiveSalaryRequest  true  "application_id, to_account_id или to_deposit_id"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /client/salary-project/receive [post]
 func (h *Handler) receiveSalary(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	userID := userIDFromRequest(r)
+	if userID == 0 {
+		respondError(w, http.StatusUnauthorized, "требуется авторизация")
+		return
+	}
+
+	var input receiveSalaryRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "неверный формат JSON")
+		return
+	}
+	defer r.Body.Close()
+
+	if input.ApplicationID <= 0 {
+		respondError(w, http.StatusBadRequest, "application_id должен быть положительным числом")
+		return
+	}
+	hasAccount := input.ToAccountID != nil && *input.ToAccountID > 0
+	hasDeposit := input.ToDepositID != nil && *input.ToDepositID > 0
+	if !hasAccount && !hasDeposit {
+		respondError(w, http.StatusBadRequest, "укажите to_account_id или to_deposit_id")
+		return
+	}
+	if hasAccount && hasDeposit {
+		respondError(w, http.StatusBadRequest, "укажите только один из to_account_id или to_deposit_id")
+		return
+	}
+
+	err := h.services.SalaryProject.ReceiveSalary(userID, input.ApplicationID, input.ToAccountID, input.ToDepositID)
+	if err != nil {
+		switch err {
+		case domain.ErrNotFound:
+			respondError(w, http.StatusNotFound, "заявка не найдена")
+		case domain.ErrForbidden:
+			respondError(w, http.StatusForbidden, "недостаточно прав или счёт/вклад не принадлежит вам")
+		case domain.ErrApplicationNotApproved:
+			respondError(w, http.StatusBadRequest, "заявка не одобрена или уже выплачена")
+		case domain.ErrApplicationAlreadyPaid:
+			respondError(w, http.StatusBadRequest, "зарплата по этой заявке уже получена")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось получить зарплату")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

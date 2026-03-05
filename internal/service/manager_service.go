@@ -8,12 +8,19 @@ import (
 )
 
 type Manager struct {
-	userRepo    repository.UserRepository
-	accountRepo repository.AccountRepository
+	userRepo      repository.UserRepository
+	accountRepo   repository.AccountRepository
+	enterpriseRepo repository.EnterpriseRepository
+	salaryRepo    repository.SalaryApplicationRepository
 }
 
-func NewManagerService(userRepo repository.UserRepository, accountRepo repository.AccountRepository) *Manager {
-	return &Manager{userRepo: userRepo, accountRepo: accountRepo}
+func NewManagerService(userRepo repository.UserRepository, accountRepo repository.AccountRepository, enterpriseRepo repository.EnterpriseRepository, salaryRepo repository.SalaryApplicationRepository) *Manager {
+	return &Manager{
+		userRepo:      userRepo,
+		accountRepo:   accountRepo,
+		enterpriseRepo: enterpriseRepo,
+		salaryRepo:    salaryRepo,
+	}
 }
 
 // ApproveUser подтверждает регистрацию клиента (is_active = true). Менеджер может подтверждать только пользователей с ролью client.
@@ -77,4 +84,49 @@ func (s *Manager) UnblockAccount(accountID int) error {
 		return err
 	}
 	return s.accountRepo.SetAccountBlocked(accountID, false)
+}
+
+// GetEnterprisesWithEmployees возвращает список предприятий с привязкой ID сотрудников по каждому.
+func (s *Manager) GetEnterprisesWithEmployees() ([]domain.EnterpriseWithEmployees, error) {
+	return s.enterpriseRepo.GetEnterprisesWithEmployees()
+}
+
+// AddEmployee добавляет пользователя в предприятие как сотрудника.
+func (s *Manager) AddEmployee(enterpriseID, userID int) error {
+	_, err := s.enterpriseRepo.GetEnterpriseByID(enterpriseID)
+	if err != nil {
+		return err
+	}
+	return s.enterpriseRepo.AddEmployee(enterpriseID, userID)
+}
+
+// RemoveEmployee удаляет сотрудника из предприятия; pending заявки по этому предприятию отклоняются.
+func (s *Manager) RemoveEmployee(enterpriseID, userID int) error {
+	_, err := s.enterpriseRepo.GetEnterpriseByID(enterpriseID)
+	if err != nil {
+		return err
+	}
+	if err := s.salaryRepo.RejectPendingByUserAndEnterprise(userID, enterpriseID); err != nil {
+		return err
+	}
+	return s.enterpriseRepo.RemoveEmployee(enterpriseID, userID)
+}
+
+// ApproveSalaryApplication одобряет заявку на ЗП. Проверяет баланс предприятия >= сумма заявки.
+func (s *Manager) ApproveSalaryApplication(applicationID int) error {
+	app, err := s.salaryRepo.GetByID(applicationID)
+	if err != nil {
+		return err
+	}
+	if app.Status != domain.SalaryApplicationStatusPending {
+		return domain.ErrApplicationNotPending
+	}
+	ent, err := s.enterpriseRepo.GetEnterpriseByID(app.EnterpriseID)
+	if err != nil {
+		return err
+	}
+	if ent.Balance < app.Amount {
+		return domain.ErrInsufficientEnterpriseBalance
+	}
+	return s.salaryRepo.UpdateStatus(applicationID, domain.SalaryApplicationStatusApproved)
 }

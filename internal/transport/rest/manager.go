@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -160,13 +161,28 @@ func (h *Handler) unblockAccount(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// addEmployeeToEnterpriseRequest тело запроса POST /manager/enterprises/{id}/employees
+type addEmployeeToEnterpriseRequest struct {
+	UserID int `json:"user_id" example:"3"`
+}
+
 // getEnterprisesWithEmployees godoc
 // @Summary      Предприятия с сотрудниками
 // @Tags         manager
 // @Security     BearerAuth
+// @Success      200  {array}  domain.EnterpriseWithEmployees
+// @Failure      401  {object}  map[string]string
 // @Router       /manager/enterprises [get]
 func (h *Handler) getEnterprisesWithEmployees(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	list, err := h.services.Manager.GetEnterprisesWithEmployees()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "не удалось получить список предприятий")
+		return
+	}
+	if list == nil {
+		list = []domain.EnterpriseWithEmployees{}
+	}
+	respondJSON(w, http.StatusOK, list)
 }
 
 // addEmployeeToEnterprise godoc
@@ -174,29 +190,131 @@ func (h *Handler) getEnterprisesWithEmployees(w http.ResponseWriter, r *http.Req
 // @Tags         manager
 // @Security     BearerAuth
 // @Accept       json
-// @Param        id   path  int  true  "ID предприятия"
+// @Param        id    path  int  true  "ID предприятия"
+// @Param        body  body  addEmployeeToEnterpriseRequest  true  "user_id"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /manager/enterprises/{id}/employees [post]
 func (h *Handler) addEmployeeToEnterprise(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	enterpriseID, err := parseIDFromPath(r, "id", "id предприятия")
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var input addEmployeeToEnterpriseRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "неверный формат JSON")
+		return
+	}
+	defer r.Body.Close()
+
+	if input.UserID <= 0 {
+		respondError(w, http.StatusBadRequest, "user_id должен быть положительным числом")
+		return
+	}
+
+	err = h.services.Manager.AddEmployee(enterpriseID, input.UserID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			respondError(w, http.StatusNotFound, "предприятие не найдено")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось добавить сотрудника")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // removeEmployeeFromEnterprise godoc
 // @Summary      Удалить сотрудника из предприятия
+// @Description  Pending заявки этого сотрудника по предприятию автоматически отклоняются.
 // @Tags         manager
 // @Security     BearerAuth
 // @Param        enterprise_id   path  int  true  "ID предприятия"
-// @Param        user_id         path  int  true  "ID пользователя"
+// @Param        user_id        path  int  true  "ID пользователя"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /manager/enterprises/{enterprise_id}/employees/{user_id} [delete]
 func (h *Handler) removeEmployeeFromEnterprise(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	vars := mux.Vars(r)
+	enterpriseID, err := strconv.Atoi(vars["enterprise_id"])
+	if err != nil || enterpriseID <= 0 {
+		respondError(w, http.StatusBadRequest, "enterprise_id должен быть положительным числом")
+		return
+	}
+	userID, err := strconv.Atoi(vars["user_id"])
+	if err != nil || userID <= 0 {
+		respondError(w, http.StatusBadRequest, "user_id должен быть положительным числом")
+		return
+	}
+
+	err = h.services.Manager.RemoveEmployee(enterpriseID, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			respondError(w, http.StatusNotFound, "предприятие не найдено")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось удалить сотрудника")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// parseIDFromPath извлекает id из path по ключу key (для унификации).
+func parseIDFromPath(r *http.Request, key, label string) (int, error) {
+	vars := mux.Vars(r)
+	idStr, ok := vars[key]
+	if !ok {
+		return 0, errors.New(label + " обязателен")
+	}
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id <= 0 {
+		return 0, errors.New(label + " должен быть положительным числом")
+	}
+	return id, nil
 }
 
 // approveSalaryApplication godoc
 // @Summary      Подтвердить заявку на зарплатный проект
+// @Description  Одобряет заявку (status = approved). Баланс предприятия должен быть не меньше суммы заявки.
 // @Tags         manager
 // @Security     BearerAuth
 // @Param        id   path  int  true  "ID заявки"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /manager/salary-project/applications/{id}/approve [post]
 func (h *Handler) approveSalaryApplication(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	applicationID, err := parseIDFromPath(r, "id", "id заявки")
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = h.services.Manager.ApproveSalaryApplication(applicationID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			respondError(w, http.StatusNotFound, "заявка не найдена")
+		case errors.Is(err, domain.ErrApplicationNotPending):
+			respondError(w, http.StatusBadRequest, "заявка уже рассмотрена (не в статусе pending)")
+		case errors.Is(err, domain.ErrInsufficientEnterpriseBalance):
+			respondError(w, http.StatusBadRequest, "недостаточно средств на балансе предприятия")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось одобрить заявку")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -20,6 +20,19 @@ type BankRepository interface {
 
 type EnterpriseRepository interface {
 	GetAllEnterprises() ([]domain.Enterprise, error)
+	GetEnterpriseByID(id int) (*domain.Enterprise, error)
+	GetEnterprisesWithEmployees() ([]domain.EnterpriseWithEmployees, error)
+	AddEmployee(enterpriseID, userID int) error
+	RemoveEmployee(enterpriseID, userID int) error
+	IsEmployee(enterpriseID, userID int) (bool, error)
+}
+
+type SalaryApplicationRepository interface {
+	Create(app *domain.SalaryApplication) error
+	GetByID(id int) (*domain.SalaryApplication, error)
+	UpdateStatus(id int, status string) error
+	RejectPendingByUserAndEnterprise(userID, enterpriseID int) error
+	PaySalary(applicationID int, toAccountID *int, toDepositID *int) error
 }
 
 type AccountRepository interface {
@@ -39,19 +52,21 @@ type DepositRepository interface {
 }
 
 type Repositories struct {
-	User        UserRepository
-	Bank        BankRepository
-	Enterprise  EnterpriseRepository
-	Account     AccountRepository
-	Deposit     DepositRepository
+	User               UserRepository
+	Bank               BankRepository
+	Enterprise         EnterpriseRepository
+	Account            AccountRepository
+	Deposit            DepositRepository
+	SalaryApplication  SalaryApplicationRepository
 }
 
 func NewRepositories(db *pgxpool.Pool) *Repositories {
 	return &Repositories{
-		User:       postgres.NewUserRepo(db),
-		Bank:       postgres.NewBankRepo(db),
-		Enterprise: postgres.NewEnterpriseRepo(db),
-		Account:    postgres.NewAccountRepo(db),
-		Deposit:    postgres.NewDepositRepo(db),
+		User:              postgres.NewUserRepo(db),
+		Bank:              postgres.NewBankRepo(db),
+		Enterprise:        postgres.NewEnterpriseRepo(db),
+		Account:           postgres.NewAccountRepo(db),
+		Deposit:           postgres.NewDepositRepo(db),
+		SalaryApplication: postgres.NewSalaryApplicationRepo(db),
 	}
 }
