@@ -496,6 +496,10 @@ func (h *Handler) receiveSalary(w http.ResponseWriter, r *http.Request) {
 		switch err {
 		case domain.ErrNotFound:
 			respondError(w, http.StatusNotFound, "заявка не найдена")
+		case domain.ErrAccountNotFound:
+			respondError(w, http.StatusNotFound, "счёт не найден")
+		case domain.ErrDepositNotFound:
+			respondError(w, http.StatusNotFound, "вклад не найден")
 		case domain.ErrForbidden:
 			respondError(w, http.StatusForbidden, "недостаточно прав или счёт/вклад не принадлежит вам")
 		case domain.ErrApplicationNotApproved:

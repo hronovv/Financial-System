@@ -106,7 +106,7 @@ func (r *SalaryApplicationRepo) PaySalary(applicationID int, toAccountID *int, t
 		err = tx.QueryRow(ctx, `SELECT user_id FROM accounts WHERE id = $1 FOR UPDATE`, *toAccountID).Scan(&accUserID)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrNotFound
+				return domain.ErrAccountNotFound
 			}
 			return err
 		}
@@ -122,7 +122,7 @@ func (r *SalaryApplicationRepo) PaySalary(applicationID int, toAccountID *int, t
 		err = tx.QueryRow(ctx, `SELECT user_id FROM deposits WHERE id = $1 FOR UPDATE`, *toDepositID).Scan(&depUserID)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return domain.ErrNotFound
+				return domain.ErrDepositNotFound
 			}
 			return err
 		}

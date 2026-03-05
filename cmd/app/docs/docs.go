@@ -676,6 +676,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Создаёт заявку со статусом pending. Только сотрудник предприятия может подать заявку.",
                 "consumes": [
                     "application/json"
                 ],
@@ -683,7 +684,61 @@ const docTemplate = `{
                     "client"
                 ],
                 "summary": "Подать заявку на зарплатный проект",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "enterprise_id, amount",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_rest.applySalaryProjectRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/financial_system_internal_domain.SalaryApplication"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/client/salary-project/receive": {
@@ -693,6 +748,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Зачисляет зарплату по одобренной заявке на указанный счёт или вклад (один из to_account_id, to_deposit_id обязателен).",
                 "consumes": [
                     "application/json"
                 ],
@@ -700,7 +756,58 @@ const docTemplate = `{
                     "client"
                 ],
                 "summary": "Получить зарплату",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "application_id, to_account_id или to_deposit_id",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_rest.receiveSalaryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/manager/accounts/{id}/block": {
@@ -822,7 +929,26 @@ const docTemplate = `{
                     "manager"
                 ],
                 "summary": "Предприятия с сотрудниками",
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/financial_system_internal_domain.EnterpriseWithEmployees"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/manager/enterprises/{enterprise_id}/employees/{user_id}": {
@@ -832,6 +958,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Pending заявки этого сотрудника по предприятию автоматически отклоняются.",
                 "tags": [
                     "manager"
                 ],
@@ -852,7 +979,38 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/manager/enterprises/{id}/employees": {
@@ -876,9 +1034,49 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "user_id",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_rest.addEmployeeToEnterpriseRequest"
+                        }
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/manager/salary-project/applications/{id}/approve": {
@@ -888,6 +1086,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Одобряет заявку (status = approved). Баланс предприятия должен быть не меньше суммы заявки.",
                 "tags": [
                     "manager"
                 ],
@@ -901,7 +1100,38 @@ const docTemplate = `{
                         "required": true
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/manager/users/{id}/approve": {
@@ -1099,6 +1329,49 @@ const docTemplate = `{
                 }
             }
         },
+        "financial_system_internal_domain.EnterpriseWithEmployees": {
+            "type": "object",
+            "properties": {
+                "employee_user_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "enterprise": {
+                    "$ref": "#/definitions/financial_system_internal_domain.Enterprise"
+                }
+            }
+        },
+        "financial_system_internal_domain.SalaryApplication": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "enterprise_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "paid_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "financial_system_internal_domain.Transaction": {
             "type": "object",
             "properties": {
@@ -1125,6 +1398,28 @@ const docTemplate = `{
                 },
                 "transaction_type": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_transport_rest.addEmployeeToEnterpriseRequest": {
+            "type": "object",
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "internal_transport_rest.applySalaryProjectRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number",
+                    "example": 50000
+                },
+                "enterprise_id": {
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -1160,6 +1455,23 @@ const docTemplate = `{
                 "interest_rate": {
                     "type": "number",
                     "example": 5.5
+                }
+            }
+        },
+        "internal_transport_rest.receiveSalaryRequest": {
+            "type": "object",
+            "properties": {
+                "application_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "to_account_id": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "to_deposit_id": {
+                    "type": "integer",
+                    "example": 2
                 }
             }
         },

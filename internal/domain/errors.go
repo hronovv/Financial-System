@@ -16,6 +16,8 @@ var (
 	ErrDepositAlreadyClosed     = errors.New("deposit is already closed")
 	ErrDepositHasNonZeroBalance = errors.New("deposit has non-zero balance")
 	ErrNotFound                 = errors.New("not found")
+	ErrAccountNotFound          = errors.New("account not found")
+	ErrDepositNotFound          = errors.New("deposit not found")
 	ErrUserAlreadyActive        = errors.New("user is already active")
 	ErrCanOnlyApproveClient     = errors.New("can only approve users with role client")
 	ErrNotEmployee              = errors.New("user is not an employee of this enterprise")
