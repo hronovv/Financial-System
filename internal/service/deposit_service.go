@@ -44,7 +44,7 @@ func (s *Deposit) CloseDeposit(userID, depositID int) error {
 	return s.repo.SetDepositBlocked(depositID, true)
 }
 
-// TransferFromDeposit переводит с вклада на счёт или на другой вклад того же пользователя. Указывается ровно один приёмник: to_account_id или to_deposit_id.
+// TransferFromDeposit переводит средства с вклада на счёт или другой вклад того же пользователя.
 func (s *Deposit) TransferFromDeposit(userID, fromDepositID int, toAccountID, toDepositID *int, amount float64) error {
 	hasAccount := toAccountID != nil && *toAccountID > 0
 	hasDeposit := toDepositID != nil && *toDepositID > 0

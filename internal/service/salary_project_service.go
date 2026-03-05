@@ -14,7 +14,7 @@ func NewSalaryProjectService(enterpriseRepo repository.EnterpriseRepository, sal
 	return &SalaryProject{enterpriseRepo: enterpriseRepo, salaryRepo: salaryRepo}
 }
 
-// ApplyForSalaryProject создаёт заявку на зарплатный проект (status pending). Только сотрудник предприятия может подать заявку.
+// ApplyForSalaryProject создаёт заявку на зарплатный проект (status pending). Доступно только сотрудникам предприятия.
 func (s *SalaryProject) ApplyForSalaryProject(userID, enterpriseID int, amount float64) (*domain.SalaryApplication, error) {
 	if amount <= 0 {
 		return nil, domain.ErrInvalidAmount
@@ -43,7 +43,7 @@ func (s *SalaryProject) ApplyForSalaryProject(userID, enterpriseID int, amount f
 	return app, nil
 }
 
-// ReceiveSalary зачисляет зарплату по одобренной заявке на счёт или вклад (один из toAccountID, toDepositID должен быть указан).
+// ReceiveSalary выполняет выплату по одобренной заявке на указанный счёт или вклад.
 func (s *SalaryProject) ReceiveSalary(userID, applicationID int, toAccountID, toDepositID *int) error {
 	app, err := s.salaryRepo.GetByID(applicationID)
 	if err != nil {

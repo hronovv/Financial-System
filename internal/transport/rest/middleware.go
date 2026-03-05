@@ -15,8 +15,7 @@ const (
 	ContextKeyRole   contextKey = "role"
 )
 
-// authMiddleware возвращает middleware, который проверяет JWT и что роль пользователя совпадает с requiredRole.
-// Извлекает user_id и role из токена и кладёт их в context запроса.
+// authMiddleware проверяет JWT и роль; при успехе кладёт user_id и role в context.
 func (h *Handler) authMiddleware(requiredRole string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +48,7 @@ func (h *Handler) authMiddleware(requiredRole string) func(http.Handler) http.Ha
 	}
 }
 
-// userIDFromRequest возвращает user_id из context (после authMiddleware). Если не найден — 0.
+// userIDFromRequest возвращает user_id из context; 0, если не установлен.
 func userIDFromRequest(r *http.Request) int {
 	v, _ := r.Context().Value(ContextKeyUserID).(int)
 	return v

@@ -16,8 +16,7 @@ func NewAccountService(repo repository.AccountRepository) *Account {
 	return &Account{repo: repo}
 }
 
-// OpenAccount создает новый счет для пользователя в банке.
-// TODO: userID должен браться из JWT, а не из тела запроса.
+// OpenAccount создаёт счёт в указанном банке.
 func (s *Account) OpenAccount(userID, bankID int) (*domain.Account, error) {
 	accountNumber, err := generateAccountNumber()
 	if err != nil {
@@ -39,8 +38,7 @@ func (s *Account) OpenAccount(userID, bankID int) (*domain.Account, error) {
 	return account, nil
 }
 
-// CloseAccount помечает счет как заблокированный.
-// TODO: userID должен браться из JWT, а не из тела запроса.
+// CloseAccount блокирует счёт. Баланс должен быть нулевым.
 func (s *Account) CloseAccount(userID, accountID int) error {
 	acc, err := s.repo.GetAccountByID(accountID)
 	if err != nil {
@@ -62,8 +60,7 @@ func (s *Account) CloseAccount(userID, accountID int) error {
 	return s.repo.SetAccountBlocked(accountID, true)
 }
 
-// TransferFromAccount переводит деньги со счета на другой счет или вклад (внутри одного пользователя).
-// TODO: userID должен браться из JWT, а не из тела запроса.
+// TransferFromAccount переводит средства со счёта на счёт или вклад того же пользователя.
 func (s *Account) TransferFromAccount(userID, fromAccountID int, toAccountID, toDepositID *int, amount float64) error {
 	if amount <= 0 {
 		return domain.ErrInvalidAmount
@@ -83,8 +80,7 @@ func (s *Account) TransferFromAccount(userID, fromAccountID int, toAccountID, to
 	return s.repo.TransferAccountToDeposit(userID, fromAccountID, *toDepositID, amount)
 }
 
-// GetAccountHistory возвращает историю операций по счету пользователя.
-// TODO: userID должен браться из JWT, а не из запроса.
+// GetAccountHistory возвращает историю операций по счёту.
 func (s *Account) GetAccountHistory(userID, accountID int) ([]domain.Transaction, error) {
 	acc, err := s.repo.GetAccountByID(accountID)
 	if err != nil {

@@ -89,7 +89,7 @@ func (h *Handler) getUserHistory(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, history)
 }
 
-// parseAccountIDFromRequest извлекает id счёта из path (для /manager/accounts/{id}/block и unblock).
+// parseAccountIDFromRequest извлекает id счёта из path.
 func parseAccountIDFromRequest(r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	idStr, ok := vars["id"]
@@ -161,7 +161,7 @@ func (h *Handler) unblockAccount(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// parseDepositIDFromRequest извлекает id вклада из path (для /manager/deposits/{id}/block и unblock).
+// parseDepositIDFromRequest извлекает id вклада из path.
 func parseDepositIDFromRequest(r *http.Request) (int, error) {
 	return parseIDFromPath(r, "id", "id вклада")
 }
@@ -333,7 +333,7 @@ func (h *Handler) removeEmployeeFromEnterprise(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// parseIDFromPath извлекает id из path по ключу key (для унификации).
+// parseIDFromPath извлекает числовой id из path по ключу key.
 func parseIDFromPath(r *http.Request, key, label string) (int, error) {
 	vars := mux.Vars(r)
 	idStr, ok := vars[key]
