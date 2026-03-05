@@ -10,6 +10,8 @@ import (
 type UserRepository interface {
 	CreateUser(user *domain.User) error
 	GetUserByEmail(email string) (*domain.User, error)
+	GetUserByID(id int) (*domain.User, error)
+	SetUserActive(id int, active bool) error
 }
 
 type BankRepository interface {
@@ -23,10 +25,17 @@ type EnterpriseRepository interface {
 type AccountRepository interface {
 	CreateAccount(account *domain.Account) error
 	GetAccountByID(id int) (*domain.Account, error)
+	GetAccountsByUserID(userID int) ([]domain.Account, error)
 	SetAccountBlocked(id int, blocked bool) error
 	TransferAccountToAccount(userID, fromAccountID, toAccountID int, amount float64) error
 	TransferAccountToDeposit(userID, fromAccountID, toDepositID int, amount float64) error
 	GetAccountHistory(accountID int) ([]domain.Transaction, error)
+}
+
+type DepositRepository interface {
+	CreateDeposit(deposit *domain.Deposit) error
+	GetDepositByID(id int) (*domain.Deposit, error)
+	SetDepositBlocked(id int, blocked bool) error
 }
 
 type Repositories struct {
@@ -34,6 +43,7 @@ type Repositories struct {
 	Bank        BankRepository
 	Enterprise  EnterpriseRepository
 	Account     AccountRepository
+	Deposit     DepositRepository
 }
 
 func NewRepositories(db *pgxpool.Pool) *Repositories {
@@ -42,5 +52,6 @@ func NewRepositories(db *pgxpool.Pool) *Repositories {
 		Bank:       postgres.NewBankRepo(db),
 		Enterprise: postgres.NewEnterpriseRepo(db),
 		Account:    postgres.NewAccountRepo(db),
+		Deposit:    postgres.NewDepositRepo(db),
 	}
 }

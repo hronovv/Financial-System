@@ -57,3 +57,32 @@ func (r *UserRepo) GetUserByEmail(email string) (*domain.User, error) {
 	}
 	return &u, nil
 }
+
+func (r *UserRepo) GetUserByID(id int) (*domain.User, error) {
+	query := `
+		SELECT id, email, password_hash, role, is_active
+		FROM users
+		WHERE id = $1
+	`
+	var u domain.User
+	err := r.db.QueryRow(context.Background(), query, id).Scan(
+		&u.ID,
+		&u.Email,
+		&u.PasswordHash,
+		&u.Role,
+		&u.IsActive,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+	return &u, nil
+}
+
+func (r *UserRepo) SetUserActive(id int, active bool) error {
+	query := `UPDATE users SET is_active = $1 WHERE id = $2`
+	_, err := r.db.Exec(context.Background(), query, active, id)
+	return err
+}

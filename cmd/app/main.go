@@ -10,11 +10,17 @@ import (
 	"log"
 	"net/http"
 )
+
 // @title           Financial System API
 // @version         1.0
-// @description     API для управления финансами
+// @description     API для управления финансами. Клиент, менеджер и администратор.
 // @host            localhost:8080
 // @BasePath        /
+// @schemes         http
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 
 func main() {
 	cfg := config.MustLoad()

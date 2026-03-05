@@ -8,11 +8,23 @@ import (
 	"financial_system/internal/domain"
 )
 
+// authInputDTO тело запроса для sign-up и sign-in
 type authInputDTO struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" example:"user@example.com"`
+	Password string `json:"password" example:"password123"`
 }
 
+// signUp godoc
+// @Summary      Регистрация клиента
+// @Description  Регистрация нового клиента. Требует подтверждения менеджером (is_active).
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body  authInputDTO  true  "email, password (мин. 8 символов)"
+// @Success      201  {object}  map[string]string
+// @Failure      400  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /auth/sign-up [post]
 func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 	var input authInputDTO
 
@@ -43,6 +55,18 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// signIn godoc
+// @Summary      Вход
+// @Description  Вход по email и паролю. Возвращает JWT для заголовка Authorization: Bearer &lt;token&gt;. Аккаунт должен быть подтверждён (is_active).
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body  authInputDTO  true  "email, password"
+// @Success      200  {object}  map[string]string  "token"
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Router       /auth/sign-in [post]
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	var input authInputDTO
 

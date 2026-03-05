@@ -4,10 +4,10 @@ import (
 	"financial_system/internal/service"
 	"net/http"
 
-	// _ "financial_system/cmd/app/docs"
+	_ "financial_system/cmd/app/docs"
 
 	"github.com/gorilla/mux"
-	// httpSwagger "github.com/swaggo/http-swagger"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Handler struct {
@@ -80,7 +80,7 @@ func (h *Handler) InitRoutes() *mux.Router {
 	admin.HandleFunc("/logs", h.getAllLogs).Methods(http.MethodGet)
 	admin.HandleFunc("/logs/{id:[0-9]+}/undo", h.undoAction).Methods(http.MethodPost)
 
-	// router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	return router
 }

@@ -1,0 +1,726 @@
+basePath: /
+definitions:
+  financial_system_internal_domain.Account:
+    properties:
+      account_number:
+        type: string
+      balance:
+        type: number
+      bank_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_blocked:
+        type: boolean
+      user_id:
+        type: integer
+    type: object
+  financial_system_internal_domain.Bank:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  financial_system_internal_domain.Deposit:
+    properties:
+      balance:
+        type: number
+      bank_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      interest_rate:
+        type: number
+      is_blocked:
+        type: boolean
+      user_id:
+        type: integer
+    type: object
+  financial_system_internal_domain.Enterprise:
+    properties:
+      balance:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  financial_system_internal_domain.Transaction:
+    properties:
+      amount:
+        type: number
+      created_at:
+        type: string
+      from_account_id:
+        type: integer
+      from_deposit_id:
+        type: integer
+      id:
+        type: integer
+      to_account_id:
+        type: integer
+      to_deposit_id:
+        type: integer
+      transaction_type:
+        type: string
+    type: object
+  internal_transport_rest.authInputDTO:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: password123
+        type: string
+    type: object
+  internal_transport_rest.openAccountRequest:
+    properties:
+      bank_id:
+        example: 1
+        type: integer
+    type: object
+  internal_transport_rest.openDepositRequest:
+    properties:
+      bank_id:
+        example: 1
+        type: integer
+      interest_rate:
+        example: 5.5
+        type: number
+    type: object
+  internal_transport_rest.transferFromAccountRequest:
+    properties:
+      amount:
+        example: 100.5
+        type: number
+      from_account_id:
+        example: 10
+        type: integer
+      to_account_id:
+        example: 11
+        type: integer
+      to_deposit_id:
+        example: 5
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API для управления финансами. Клиент, менеджер и администратор.
+  title: Financial System API
+  version: "1.0"
+paths:
+  /admin/logs:
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Все логи действий
+      tags:
+      - admin
+  /admin/logs/{id}/undo:
+    post:
+      parameters:
+      - description: ID записи лога
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Отменить действие
+      tags:
+      - admin
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: 'Вход по email и паролю. Возвращает JWT для заголовка Authorization:
+        Bearer &lt;token&gt;. Аккаунт должен быть подтверждён (is_active).'
+      parameters:
+      - description: email, password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_rest.authInputDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Вход
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Регистрация нового клиента. Требует подтверждения менеджером (is_active).
+      parameters:
+      - description: email, password (мин. 8 символов)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_rest.authInputDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Регистрация клиента
+      tags:
+      - auth
+  /client/accounts:
+    post:
+      consumes:
+      - application/json
+      description: Открывает счёт в указанном банке. user_id берётся из JWT.
+      parameters:
+      - description: bank_id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_rest.openAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/financial_system_internal_domain.Account'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Открыть счёт
+      tags:
+      - client
+  /client/accounts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Закрывает счёт (is_blocked=true). Баланс должен быть 0. user_id
+        из JWT.
+      parameters:
+      - description: ID счёта
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Закрыть счёт
+      tags:
+      - client
+  /client/accounts/history:
+    get:
+      consumes:
+      - application/json
+      description: 'Возвращает список транзакций по счёту. user_id из JWT. Query:
+        account_id.'
+      parameters:
+      - description: ID счёта
+        in: query
+        name: account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/financial_system_internal_domain.Transaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: История операций по счёту
+      tags:
+      - client
+  /client/accounts/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Перевод со счёта на другой счёт или вклад (внутри одного пользователя).
+        Указать либо to_account_id, либо to_deposit_id.
+      parameters:
+      - description: from_account_id, to_account_id или to_deposit_id, amount
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_rest.transferFromAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Перевод со счёта
+      tags:
+      - client
+  /client/banks:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает все банки системы. Требуется роль client и JWT.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/financial_system_internal_domain.Bank'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Список банков
+      tags:
+      - client
+  /client/deposits:
+    post:
+      consumes:
+      - application/json
+      description: Создаёт вклад в банке с указанной процентной ставкой. Баланс при
+        создании 0.
+      parameters:
+      - description: bank_id, interest_rate
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_rest.openDepositRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/financial_system_internal_domain.Deposit'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Открыть вклад
+      tags:
+      - client
+  /client/deposits/{id}:
+    delete:
+      description: Закрывает вклад (is_blocked=true). Баланс должен быть 0.
+      parameters:
+      - description: ID вклада
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Закрыть вклад
+      tags:
+      - client
+  /client/deposits/{id}/accumulate:
+    post:
+      parameters:
+      - description: ID вклада
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Начисление на вклад
+      tags:
+      - client
+  /client/deposits/transfer:
+    post:
+      consumes:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Перевод со вклада
+      tags:
+      - client
+  /client/enterprises:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает все предприятия. Требуется роль client и JWT.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/financial_system_internal_domain.Enterprise'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Список предприятий
+      tags:
+      - client
+  /client/salary-project/apply:
+    post:
+      consumes:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Подать заявку на зарплатный проект
+      tags:
+      - client
+  /client/salary-project/receive:
+    post:
+      consumes:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Получить зарплату
+      tags:
+      - client
+  /manager/accounts/{id}/block:
+    post:
+      parameters:
+      - description: ID счёта
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Заблокировать счёт
+      tags:
+      - manager
+  /manager/accounts/{id}/unblock:
+    post:
+      parameters:
+      - description: ID счёта
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Разблокировать счёт
+      tags:
+      - manager
+  /manager/enterprises:
+    get:
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Предприятия с сотрудниками
+      tags:
+      - manager
+  /manager/enterprises/{enterprise_id}/employees/{user_id}:
+    delete:
+      parameters:
+      - description: ID предприятия
+        in: path
+        name: enterprise_id
+        required: true
+        type: integer
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Удалить сотрудника из предприятия
+      tags:
+      - manager
+  /manager/enterprises/{id}/employees:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID предприятия
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Добавить сотрудника в предприятие
+      tags:
+      - manager
+  /manager/salary-project/applications/{id}/approve:
+    post:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Подтвердить заявку на зарплатный проект
+      tags:
+      - manager
+  /manager/users/{id}/approve:
+    post:
+      description: Устанавливает is_active = true для пользователя с ролью client.
+        После этого клиент может войти по SignIn.
+      parameters:
+      - description: ID пользователя (клиента)
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Подтвердить регистрацию клиента
+      tags:
+      - manager
+  /manager/users/{id}/history:
+    get:
+      description: Объединённая история по всем счетам пользователя (аналогично /client/accounts/history
+        по каждому счёту), отсортировано по дате.
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/financial_system_internal_domain.Transaction'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: История операций пользователя
+      tags:
+      - manager
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

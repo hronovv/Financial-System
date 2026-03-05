@@ -62,6 +62,41 @@ func (r *AccountRepo) GetAccountByID(id int) (*domain.Account, error) {
 	return &acc, nil
 }
 
+func (r *AccountRepo) GetAccountsByUserID(userID int) ([]domain.Account, error) {
+	query := `
+		SELECT id, user_id, bank_id, account_number, balance, is_blocked, created_at
+		FROM accounts
+		WHERE user_id = $1
+		ORDER BY id
+	`
+	rows, err := r.db.Query(context.Background(), query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var accounts []domain.Account
+	for rows.Next() {
+		var acc domain.Account
+		if err := rows.Scan(
+			&acc.ID,
+			&acc.UserID,
+			&acc.BankID,
+			&acc.AccountNumber,
+			&acc.Balance,
+			&acc.IsBlocked,
+			&acc.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, acc)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return accounts, nil
+}
+
 func (r *AccountRepo) SetAccountBlocked(id int, blocked bool) error {
 	query := `
 		UPDATE accounts
