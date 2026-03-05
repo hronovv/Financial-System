@@ -541,6 +541,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Перевод с вклада на счёт или на другой вклад того же пользователя. Указать ровно один из to_account_id или to_deposit_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -548,7 +549,58 @@ const docTemplate = `{
                     "client"
                 ],
                 "summary": "Перевод со вклада",
-                "responses": {}
+                "parameters": [
+                    {
+                        "description": "from_deposit_id, to_account_id или to_deposit_id, amount",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_rest.transferFromDepositRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/client/deposits/{id}": {
@@ -613,20 +665,73 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Переводит средства со счёта пользователя на указанный вклад (id в path).",
+                "consumes": [
+                    "application/json"
+                ],
                 "tags": [
                     "client"
                 ],
-                "summary": "Начисление на вклад",
+                "summary": "Начисление на вклад (пополнение со счёта)",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID вклада",
+                        "description": "ID вклада (куда пополняем)",
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "from_account_id, amount",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_rest.accumulateDepositRequest"
+                        }
                     }
                 ],
-                "responses": {}
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/client/enterprises": {
@@ -879,6 +984,115 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "ID счёта",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/manager/deposits/{id}/block": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Менеджер может заблокировать вклад в любой момент (без проверки на баланс).",
+                "tags": [
+                    "manager"
+                ],
+                "summary": "Заблокировать вклад",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID вклада",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/manager/deposits/{id}/unblock": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "manager"
+                ],
+                "summary": "Разблокировать вклад",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID вклада",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1401,6 +1615,19 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_transport_rest.accumulateDepositRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number",
+                    "example": 500
+                },
+                "from_account_id": {
+                    "type": "integer",
+                    "example": 10
+                }
+            }
+        },
         "internal_transport_rest.addEmployeeToEnterpriseRequest": {
             "type": "object",
             "properties": {
@@ -1489,6 +1716,27 @@ const docTemplate = `{
                 "to_account_id": {
                     "type": "integer",
                     "example": 11
+                },
+                "to_deposit_id": {
+                    "type": "integer",
+                    "example": 5
+                }
+            }
+        },
+        "internal_transport_rest.transferFromDepositRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number",
+                    "example": 100.5
+                },
+                "from_deposit_id": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "to_account_id": {
+                    "type": "integer",
+                    "example": 10
                 },
                 "to_deposit_id": {
                     "type": "integer",

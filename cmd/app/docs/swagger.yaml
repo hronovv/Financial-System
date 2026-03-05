@@ -97,6 +97,15 @@ definitions:
       transaction_type:
         type: string
     type: object
+  internal_transport_rest.accumulateDepositRequest:
+    properties:
+      amount:
+        example: 500
+        type: number
+      from_account_id:
+        example: 10
+        type: integer
+    type: object
   internal_transport_rest.addEmployeeToEnterpriseRequest:
     properties:
       user_id:
@@ -158,6 +167,21 @@ definitions:
         type: integer
       to_account_id:
         example: 11
+        type: integer
+      to_deposit_id:
+        example: 5
+        type: integer
+    type: object
+  internal_transport_rest.transferFromDepositRequest:
+    properties:
+      amount:
+        example: 100.5
+        type: number
+      from_deposit_id:
+        example: 3
+        type: integer
+      to_account_id:
+        example: 10
         type: integer
       to_deposit_id:
         example: 5
@@ -543,23 +567,94 @@ paths:
       - client
   /client/deposits/{id}/accumulate:
     post:
+      consumes:
+      - application/json
+      description: Переводит средства со счёта пользователя на указанный вклад (id
+        в path).
       parameters:
-      - description: ID вклада
+      - description: ID вклада (куда пополняем)
         in: path
         name: id
         required: true
         type: integer
-      responses: {}
+      - description: from_account_id, amount
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_rest.accumulateDepositRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
-      summary: Начисление на вклад
+      summary: Начисление на вклад (пополнение со счёта)
       tags:
       - client
   /client/deposits/transfer:
     post:
       consumes:
       - application/json
-      responses: {}
+      description: Перевод с вклада на счёт или на другой вклад того же пользователя.
+        Указать ровно один из to_account_id или to_deposit_id.
+      parameters:
+      - description: from_deposit_id, to_account_id или to_deposit_id, amount
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_rest.transferFromDepositRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Перевод со вклада
@@ -748,6 +843,76 @@ paths:
       security:
       - BearerAuth: []
       summary: Разблокировать счёт
+      tags:
+      - manager
+  /manager/deposits/{id}/block:
+    post:
+      description: Менеджер может заблокировать вклад в любой момент (без проверки
+        на баланс).
+      parameters:
+      - description: ID вклада
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Заблокировать вклад
+      tags:
+      - manager
+  /manager/deposits/{id}/unblock:
+    post:
+      parameters:
+      - description: ID вклада
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Разблокировать вклад
       tags:
       - manager
   /manager/enterprises:

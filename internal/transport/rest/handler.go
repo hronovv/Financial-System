@@ -67,6 +67,8 @@ func (h *Handler) InitRoutes() *mux.Router {
 
 	manager.HandleFunc("/accounts/{id:[0-9]+}/block", h.blockAccount).Methods(http.MethodPost)
 	manager.HandleFunc("/accounts/{id:[0-9]+}/unblock", h.unblockAccount).Methods(http.MethodPost)
+	manager.HandleFunc("/deposits/{id:[0-9]+}/block", h.blockDeposit).Methods(http.MethodPost)
+	manager.HandleFunc("/deposits/{id:[0-9]+}/unblock", h.unblockDeposit).Methods(http.MethodPost)
 
 	manager.HandleFunc("/enterprises", h.getEnterprisesWithEmployees).Methods(http.MethodGet)
 	manager.HandleFunc("/enterprises/{id:[0-9]+}/employees", h.addEmployeeToEnterprise).Methods(http.MethodPost)

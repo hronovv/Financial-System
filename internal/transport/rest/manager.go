@@ -161,6 +161,70 @@ func (h *Handler) unblockAccount(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// parseDepositIDFromRequest извлекает id вклада из path (для /manager/deposits/{id}/block и unblock).
+func parseDepositIDFromRequest(r *http.Request) (int, error) {
+	return parseIDFromPath(r, "id", "id вклада")
+}
+
+// blockDeposit godoc
+// @Summary      Заблокировать вклад
+// @Description  Менеджер может заблокировать вклад в любой момент (без проверки на баланс).
+// @Tags         manager
+// @Security     BearerAuth
+// @Param        id   path  int  true  "ID вклада"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /manager/deposits/{id}/block [post]
+func (h *Handler) blockDeposit(w http.ResponseWriter, r *http.Request) {
+	depositID, err := parseDepositIDFromRequest(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.services.Manager.BlockDeposit(depositID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			respondError(w, http.StatusNotFound, "вклад не найден")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось заблокировать вклад")
+		}
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// unblockDeposit godoc
+// @Summary      Разблокировать вклад
+// @Tags         manager
+// @Security     BearerAuth
+// @Param        id   path  int  true  "ID вклада"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /manager/deposits/{id}/unblock [post]
+func (h *Handler) unblockDeposit(w http.ResponseWriter, r *http.Request) {
+	depositID, err := parseDepositIDFromRequest(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.services.Manager.UnblockDeposit(depositID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			respondError(w, http.StatusNotFound, "вклад не найден")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось разблокировать вклад")
+		}
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // addEmployeeToEnterpriseRequest тело запроса POST /manager/enterprises/{id}/employees
 type addEmployeeToEnterpriseRequest struct {
 	UserID int `json:"user_id" example:"3"`

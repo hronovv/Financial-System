@@ -49,6 +49,8 @@ type DepositRepository interface {
 	CreateDeposit(deposit *domain.Deposit) error
 	GetDepositByID(id int) (*domain.Deposit, error)
 	SetDepositBlocked(id int, blocked bool) error
+	TransferDepositToAccount(userID, fromDepositID, toAccountID int, amount float64) error
+	TransferDepositToDeposit(userID, fromDepositID, toDepositID int, amount float64) error
 }
 
 type Repositories struct {

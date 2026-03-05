@@ -30,6 +30,7 @@ type AccountService interface {
 type DepositService interface {
 	OpenDeposit(userID, bankID int, interestRate float64) (*domain.Deposit, error)
 	CloseDeposit(userID, depositID int) error
+	TransferFromDeposit(userID, fromDepositID int, toAccountID, toDepositID *int, amount float64) error
 }
 
 type ManagerService interface {
@@ -37,6 +38,8 @@ type ManagerService interface {
 	GetUserHistory(userID int) ([]domain.Transaction, error)
 	BlockAccount(accountID int) error
 	UnblockAccount(accountID int) error
+	BlockDeposit(depositID int) error
+	UnblockDeposit(depositID int) error
 	GetEnterprisesWithEmployees() ([]domain.EnterpriseWithEmployees, error)
 	AddEmployee(enterpriseID, userID int) error
 	RemoveEmployee(enterpriseID, userID int) error
@@ -65,7 +68,7 @@ func NewServices(deps *repository.Repositories, jwtSecret string, jwtExpire time
 		Enterprise:    NewEnterpriseService(deps.Enterprise),
 		Account:       NewAccountService(deps.Account),
 		Deposit:       NewDepositService(deps.Deposit),
-		Manager:       NewManagerService(deps.User, deps.Account, deps.Enterprise, deps.SalaryApplication),
+		Manager:       NewManagerService(deps.User, deps.Account, deps.Deposit, deps.Enterprise, deps.SalaryApplication),
 		SalaryProject: NewSalaryProjectService(deps.Enterprise, deps.SalaryApplication),
 	}
 }

@@ -35,6 +35,20 @@ type applySalaryProjectRequest struct {
 	Amount       float64 `json:"amount" example:"50000"`
 }
 
+// transferFromDepositRequest тело запроса POST /client/deposits/transfer
+type transferFromDepositRequest struct {
+	FromDepositID int   `json:"from_deposit_id" example:"3"`
+	ToAccountID   *int  `json:"to_account_id,omitempty" example:"10"`
+	ToDepositID   *int  `json:"to_deposit_id,omitempty" example:"5"`
+	Amount        float64 `json:"amount" example:"100.50"`
+}
+
+// accumulateDepositRequest тело запроса POST /client/deposits/{id}/accumulate
+type accumulateDepositRequest struct {
+	FromAccountID int     `json:"from_account_id" example:"10"`
+	Amount        float64 `json:"amount" example:"500"`
+}
+
 // receiveSalaryRequest тело запроса POST /client/salary-project/receive
 type receiveSalaryRequest struct {
 	ApplicationID int  `json:"application_id" example:"1"`
@@ -379,22 +393,148 @@ func (h *Handler) closeDeposit(w http.ResponseWriter, r *http.Request) {
 
 // transferFromDeposit godoc
 // @Summary      Перевод со вклада
+// @Description  Перевод с вклада на счёт или на другой вклад того же пользователя. Указать ровно один из to_account_id или to_deposit_id.
 // @Tags         client
 // @Security     BearerAuth
 // @Accept       json
+// @Param        body  body  transferFromDepositRequest  true  "from_deposit_id, to_account_id или to_deposit_id, amount"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /client/deposits/transfer [post]
 func (h *Handler) transferFromDeposit(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	userID := userIDFromRequest(r)
+	if userID == 0 {
+		respondError(w, http.StatusUnauthorized, "требуется авторизация")
+		return
+	}
+
+	var input transferFromDepositRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "неверный формат JSON")
+		return
+	}
+	defer r.Body.Close()
+
+	if input.FromDepositID <= 0 {
+		respondError(w, http.StatusBadRequest, "from_deposit_id должен быть положительным числом")
+		return
+	}
+	if input.Amount <= 0 {
+		respondError(w, http.StatusBadRequest, "amount должен быть больше 0")
+		return
+	}
+	hasAccount := input.ToAccountID != nil && *input.ToAccountID > 0
+	hasDeposit := input.ToDepositID != nil && *input.ToDepositID > 0
+	if !hasAccount && !hasDeposit {
+		respondError(w, http.StatusBadRequest, "укажите to_account_id или to_deposit_id")
+		return
+	}
+	if hasAccount && hasDeposit {
+		respondError(w, http.StatusBadRequest, "укажите только один из to_account_id или to_deposit_id")
+		return
+	}
+
+	err := h.services.Deposit.TransferFromDeposit(userID, input.FromDepositID, input.ToAccountID, input.ToDepositID, input.Amount)
+	if err != nil {
+		switch err {
+		case domain.ErrNotFound:
+			respondError(w, http.StatusNotFound, "вклад не найден")
+		case domain.ErrAccountNotFound:
+			respondError(w, http.StatusNotFound, "счёт не найден")
+		case domain.ErrDepositNotFound:
+			respondError(w, http.StatusNotFound, "вклад (приёмник) не найден")
+		case domain.ErrForbidden:
+			respondError(w, http.StatusForbidden, "недостаточно прав")
+		case domain.ErrInvalidAmount, domain.ErrInvalidTransferTarget:
+			respondError(w, http.StatusBadRequest, "неверные параметры перевода")
+		case domain.ErrInsufficientFunds:
+			respondError(w, http.StatusBadRequest, "недостаточно средств на вкладе")
+		case domain.ErrDepositBlocked:
+			respondError(w, http.StatusBadRequest, "вклад заблокирован")
+		case domain.ErrAccountBlocked:
+			respondError(w, http.StatusBadRequest, "счёт заблокирован")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось выполнить перевод")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // accumulateDeposit godoc
-// @Summary      Начисление на вклад
+// @Summary      Начисление на вклад (пополнение со счёта)
+// @Description  Переводит средства со счёта пользователя на указанный вклад (id в path).
 // @Tags         client
 // @Security     BearerAuth
-// @Param        id   path  int  true  "ID вклада"
+// @Accept       json
+// @Param        id    path  int  true  "ID вклада (куда пополняем)"
+// @Param        body  body  accumulateDepositRequest  true  "from_account_id, amount"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /client/deposits/{id}/accumulate [post]
 func (h *Handler) accumulateDeposit(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	userID := userIDFromRequest(r)
+	if userID == 0 {
+		respondError(w, http.StatusUnauthorized, "требуется авторизация")
+		return
+	}
+
+	vars := mux.Vars(r)
+	depositIDStr, ok := vars["id"]
+	if !ok {
+		respondError(w, http.StatusBadRequest, "id вклада обязателен")
+		return
+	}
+	depositID, err := strconv.Atoi(depositIDStr)
+	if err != nil || depositID <= 0 {
+		respondError(w, http.StatusBadRequest, "id вклада должен быть положительным числом")
+		return
+	}
+
+	var input accumulateDepositRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "неверный формат JSON")
+		return
+	}
+	defer r.Body.Close()
+
+	if input.FromAccountID <= 0 {
+		respondError(w, http.StatusBadRequest, "from_account_id должен быть положительным числом")
+		return
+	}
+	if input.Amount <= 0 {
+		respondError(w, http.StatusBadRequest, "amount должен быть больше 0")
+		return
+	}
+
+	// Пополнение вклада = перевод со счёта на вклад
+	err = h.services.Account.TransferFromAccount(userID, input.FromAccountID, nil, &depositID, input.Amount)
+	if err != nil {
+		switch err {
+		case domain.ErrInvalidAmount, domain.ErrInvalidTransferTarget:
+			respondError(w, http.StatusBadRequest, "неверные параметры перевода")
+		case domain.ErrForbidden:
+			respondError(w, http.StatusForbidden, "недостаточно прав")
+		case domain.ErrInsufficientFunds:
+			respondError(w, http.StatusBadRequest, "недостаточно средств на счёте")
+		case domain.ErrAccountBlocked, domain.ErrDepositBlocked:
+			respondError(w, http.StatusBadRequest, "счёт или вклад заблокирован")
+		case domain.ErrNotFound:
+			respondError(w, http.StatusNotFound, "счёт или вклад не найден")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось пополнить вклад")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // applyForSalaryProject godoc

@@ -8,18 +8,20 @@ import (
 )
 
 type Manager struct {
-	userRepo      repository.UserRepository
-	accountRepo   repository.AccountRepository
+	userRepo       repository.UserRepository
+	accountRepo    repository.AccountRepository
+	depositRepo    repository.DepositRepository
 	enterpriseRepo repository.EnterpriseRepository
-	salaryRepo    repository.SalaryApplicationRepository
+	salaryRepo     repository.SalaryApplicationRepository
 }
 
-func NewManagerService(userRepo repository.UserRepository, accountRepo repository.AccountRepository, enterpriseRepo repository.EnterpriseRepository, salaryRepo repository.SalaryApplicationRepository) *Manager {
+func NewManagerService(userRepo repository.UserRepository, accountRepo repository.AccountRepository, depositRepo repository.DepositRepository, enterpriseRepo repository.EnterpriseRepository, salaryRepo repository.SalaryApplicationRepository) *Manager {
 	return &Manager{
-		userRepo:      userRepo,
-		accountRepo:   accountRepo,
+		userRepo:       userRepo,
+		accountRepo:    accountRepo,
+		depositRepo:    depositRepo,
 		enterpriseRepo: enterpriseRepo,
-		salaryRepo:    salaryRepo,
+		salaryRepo:     salaryRepo,
 	}
 }
 
@@ -84,6 +86,24 @@ func (s *Manager) UnblockAccount(accountID int) error {
 		return err
 	}
 	return s.accountRepo.SetAccountBlocked(accountID, false)
+}
+
+// BlockDeposit блокирует вклад (менеджер). Может заблокировать в любой момент, без проверки на баланс.
+func (s *Manager) BlockDeposit(depositID int) error {
+	_, err := s.depositRepo.GetDepositByID(depositID)
+	if err != nil {
+		return err
+	}
+	return s.depositRepo.SetDepositBlocked(depositID, true)
+}
+
+// UnblockDeposit разблокирует вклад (менеджер).
+func (s *Manager) UnblockDeposit(depositID int) error {
+	_, err := s.depositRepo.GetDepositByID(depositID)
+	if err != nil {
+		return err
+	}
+	return s.depositRepo.SetDepositBlocked(depositID, false)
 }
 
 // GetEnterprisesWithEmployees возвращает список предприятий с привязкой ID сотрудников по каждому.
