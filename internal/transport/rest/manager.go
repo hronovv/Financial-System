@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -87,14 +88,47 @@ func (h *Handler) getUserHistory(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, history)
 }
 
+// parseAccountIDFromRequest извлекает id счёта из path (для /manager/accounts/{id}/block и unblock).
+func parseAccountIDFromRequest(r *http.Request) (int, error) {
+	vars := mux.Vars(r)
+	idStr, ok := vars["id"]
+	if !ok {
+		return 0, errors.New("id счёта обязателен")
+	}
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id <= 0 {
+		return 0, errors.New("id счёта должен быть положительным числом")
+	}
+	return id, nil
+}
+
 // blockAccount godoc
 // @Summary      Заблокировать счёт
 // @Tags         manager
 // @Security     BearerAuth
 // @Param        id   path  int  true  "ID счёта"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /manager/accounts/{id}/block [post]
 func (h *Handler) blockAccount(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	accountID, err := parseAccountIDFromRequest(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.services.Manager.BlockAccount(accountID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			respondError(w, http.StatusNotFound, "счёт не найден")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось заблокировать счёт")
+		}
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // unblockAccount godoc
@@ -102,9 +136,28 @@ func (h *Handler) blockAccount(w http.ResponseWriter, r *http.Request) {
 // @Tags         manager
 // @Security     BearerAuth
 // @Param        id   path  int  true  "ID счёта"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
 // @Router       /manager/accounts/{id}/unblock [post]
 func (h *Handler) unblockAccount(w http.ResponseWriter, r *http.Request) {
-	respondJSON(w, 200, "ok")
+	accountID, err := parseAccountIDFromRequest(r)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = h.services.Manager.UnblockAccount(accountID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			respondError(w, http.StatusNotFound, "счёт не найден")
+		default:
+			respondError(w, http.StatusInternalServerError, "не удалось разблокировать счёт")
+		}
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // getEnterprisesWithEmployees godoc

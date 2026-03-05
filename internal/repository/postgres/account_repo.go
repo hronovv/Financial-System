@@ -56,6 +56,9 @@ func (r *AccountRepo) GetAccountByID(id int) (*domain.Account, error) {
 		&acc.CreatedAt,
 	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
 		return nil, err
 	}
 

@@ -60,3 +60,21 @@ func (s *Manager) GetUserHistory(userID int) ([]domain.Transaction, error) {
 	})
 	return all, nil
 }
+
+// BlockAccount блокирует счёт (менеджер). Операции по счёту будут запрещены.
+func (s *Manager) BlockAccount(accountID int) error {
+	_, err := s.accountRepo.GetAccountByID(accountID)
+	if err != nil {
+		return err
+	}
+	return s.accountRepo.SetAccountBlocked(accountID, true)
+}
+
+// UnblockAccount разблокирует счёт (менеджер).
+func (s *Manager) UnblockAccount(accountID int) error {
+	_, err := s.accountRepo.GetAccountByID(accountID)
+	if err != nil {
+		return err
+	}
+	return s.accountRepo.SetAccountBlocked(accountID, false)
+}

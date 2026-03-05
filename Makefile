@@ -9,7 +9,7 @@ migrate-up:
 migrate-down:
 	@migrate -path ./migrations -database "$(DB_URL)" down
 
-service-run:
+service-run: swagger-docs
 	@go run ./cmd/app/main.go
 
 swagger-docs:

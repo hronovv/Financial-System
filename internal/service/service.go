@@ -35,6 +35,8 @@ type DepositService interface {
 type ManagerService interface {
 	ApproveUser(userID int) error
 	GetUserHistory(userID int) ([]domain.Transaction, error)
+	BlockAccount(accountID int) error
+	UnblockAccount(accountID int) error
 }
 
 type Services struct {
