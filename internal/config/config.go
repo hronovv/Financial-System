@@ -11,6 +11,12 @@ import (
 type Config struct {
 	HTTPServer HTTPServer
 	Database   Database
+	JWT        JWT
+}
+
+type JWT struct {
+	Secret string        `env:"JWT_SECRET" env-required:"true"`
+	Expire time.Duration `env:"JWT_EXPIRE" env-default:"24h"`
 }
 
 type HTTPServer struct {

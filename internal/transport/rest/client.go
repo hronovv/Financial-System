@@ -31,9 +31,13 @@ func (h *Handler) getEnterprises(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) openAccount(w http.ResponseWriter, r *http.Request) {
+	userID := userIDFromRequest(r)
+	if userID == 0 {
+		respondError(w, http.StatusUnauthorized, "требуется авторизация")
+		return
+	}
+
 	var input struct {
-		// TODO: user_id в будущем нужно будет получать из JWT, а не из тела запроса.
-		UserID int `json:"user_id"`
 		BankID int `json:"bank_id"`
 	}
 
@@ -43,16 +47,12 @@ func (h *Handler) openAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if input.UserID <= 0 {
-		respondError(w, http.StatusBadRequest, "user_id должен быть положительным числом")
-		return
-	}
 	if input.BankID <= 0 {
 		respondError(w, http.StatusBadRequest, "bank_id должен быть положительным числом")
 		return
 	}
 
-	account, err := h.services.Account.OpenAccount(input.UserID, input.BankID)
+	account, err := h.services.Account.OpenAccount(userID, input.BankID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "не удалось открыть счет")
 		return
@@ -62,6 +62,12 @@ func (h *Handler) openAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) closeAccount(w http.ResponseWriter, r *http.Request) {
+	userID := userIDFromRequest(r)
+	if userID == 0 {
+		respondError(w, http.StatusUnauthorized, "требуется авторизация")
+		return
+	}
+
 	vars := mux.Vars(r)
 	idStr, ok := vars["id"]
 	if !ok {
@@ -75,23 +81,7 @@ func (h *Handler) closeAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var input struct {
-		// TODO: user_id в будущем нужно будет получать из JWT, а не из тела запроса.
-		UserID int `json:"user_id"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		respondError(w, http.StatusBadRequest, "неверный формат JSON")
-		return
-	}
-	defer r.Body.Close()
-
-	if input.UserID <= 0 {
-		respondError(w, http.StatusBadRequest, "user_id должен быть положительным числом")
-		return
-	}
-
-	err = h.services.Account.CloseAccount(input.UserID, accountID)
+	err = h.services.Account.CloseAccount(userID, accountID)
 	if err != nil {
 		switch err {
 		case domain.ErrForbidden:
@@ -110,13 +100,17 @@ func (h *Handler) closeAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) transferFromAccount(w http.ResponseWriter, r *http.Request) {
+	userID := userIDFromRequest(r)
+	if userID == 0 {
+		respondError(w, http.StatusUnauthorized, "требуется авторизация")
+		return
+	}
+
 	var input struct {
-		// TODO: user_id в будущем нужно будет получать из JWT, а не из тела запроса.
-		UserID         int      `json:"user_id"`
-		FromAccountID  int      `json:"from_account_id"`
-		ToAccountID    *int     `json:"to_account_id,omitempty"`
-		ToDepositID    *int     `json:"to_deposit_id,omitempty"`
-		Amount         float64  `json:"amount"`
+		FromAccountID int     `json:"from_account_id"`
+		ToAccountID   *int    `json:"to_account_id,omitempty"`
+		ToDepositID   *int    `json:"to_deposit_id,omitempty"`
+		Amount        float64 `json:"amount"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -125,10 +119,6 @@ func (h *Handler) transferFromAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if input.UserID <= 0 {
-		respondError(w, http.StatusBadRequest, "user_id должен быть положительным числом")
-		return
-	}
 	if input.FromAccountID <= 0 {
 		respondError(w, http.StatusBadRequest, "from_account_id должен быть положительным числом")
 		return
@@ -138,7 +128,7 @@ func (h *Handler) transferFromAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.services.Account.TransferFromAccount(input.UserID, input.FromAccountID, input.ToAccountID, input.ToDepositID, input.Amount)
+	err := h.services.Account.TransferFromAccount(userID, input.FromAccountID, input.ToAccountID, input.ToDepositID, input.Amount)
 	if err != nil {
 		switch err {
 		case domain.ErrInvalidAmount, domain.ErrInvalidTransferTarget:
@@ -161,18 +151,15 @@ func (h *Handler) transferFromAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getAccountHistory(w http.ResponseWriter, r *http.Request) {
-	// TODO: user_id в будущем нужно будет получать из JWT, а не из параметров запроса.
-	userIDStr := r.URL.Query().Get("user_id")
-	accountIDStr := r.URL.Query().Get("account_id")
-
-	if userIDStr == "" || accountIDStr == "" {
-		respondError(w, http.StatusBadRequest, "параметры user_id и account_id обязательны")
+	userID := userIDFromRequest(r)
+	if userID == 0 {
+		respondError(w, http.StatusUnauthorized, "требуется авторизация")
 		return
 	}
 
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil || userID <= 0 {
-		respondError(w, http.StatusBadRequest, "user_id должен быть положительным числом")
+	accountIDStr := r.URL.Query().Get("account_id")
+	if accountIDStr == "" {
+		respondError(w, http.StatusBadRequest, "параметр account_id обязателен")
 		return
 	}
 

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"time"
+
 	"financial_system/internal/domain"
 	"financial_system/internal/repository"
 )
@@ -32,9 +34,9 @@ type Services struct {
 	Account     AccountService
 }
 
-func NewServices(deps *repository.Repositories) *Services {
+func NewServices(deps *repository.Repositories, jwtSecret string, jwtExpire time.Duration) *Services {
 	return &Services{
-		Auth:       NewAuthService(deps.User),
+		Auth:       NewAuthService(deps.User, jwtSecret, jwtExpire),
 		Bank:       NewBankService(deps.Bank),
 		Enterprise: NewEnterpriseService(deps.Enterprise),
 		Account:    NewAccountService(deps.Account),

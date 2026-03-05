@@ -33,9 +33,9 @@ func main() {
 	log.Println("Connected to db!")
 	repos := repository.NewRepositories(dbPool)
 
-	services := service.NewServices(repos)
+	services := service.NewServices(repos, cfg.JWT.Secret, cfg.JWT.Expire)
 
-	handlers := rest.NewHandler(services)
+	handlers := rest.NewHandler(services, cfg.JWT.Secret)
 
 
 	srv := &http.Server{

@@ -3,6 +3,8 @@ package domain
 import "errors"
 
 var (
+	ErrInvalidCredentials       = errors.New("invalid email or password")
+	ErrUserNotActive            = errors.New("user not active")
 	ErrForbidden                = errors.New("forbidden")
 	ErrAccountAlreadyClosed     = errors.New("account is already closed")
 	ErrAccountHasNonZeroBalance = errors.New("account has non-zero balance")

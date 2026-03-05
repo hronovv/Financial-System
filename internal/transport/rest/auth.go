@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"financial_system/internal/domain"
 )
 
 type authInputDTO struct {
@@ -50,22 +52,24 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	input.Email = strings.TrimSpace(input.Email)
 	if input.Email == "" || input.Password == "" {
 		respondError(w, http.StatusBadRequest, "email и пароль обязательны для входа")
 		return
 	}
 
-	// 3. Вызываем Сервис (Бизнес-логику)
-	// token, err := h.services.Auth.SignIn(input.Email, input.Password)
-	// if err != nil {
-	// 	// Если пароль неверный или менеджер еще не подтвердил аккаунт
-	// 	respondError(w, http.StatusUnauthorized, err.Error())
-	// 	return
-	// }
-
-	// 4. Отдаем токен пользователю
-	// Пока сервиса нет, отдаем фейковый токен для теста
-	token := "fake-jwt-token-123"
+	token, err := h.services.Auth.SignIn(input.Email, input.Password)
+	if err != nil {
+		switch err {
+		case domain.ErrInvalidCredentials:
+			respondError(w, http.StatusUnauthorized, "неверный email или пароль")
+		case domain.ErrUserNotActive:
+			respondError(w, http.StatusForbidden, "аккаунт не подтверждён менеджером")
+		default:
+			respondError(w, http.StatusInternalServerError, "ошибка входа")
+		}
+		return
+	}
 
 	respondJSON(w, http.StatusOK, map[string]string{
 		"token": token,

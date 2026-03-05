@@ -11,12 +11,14 @@ import (
 )
 
 type Handler struct {
-	services *service.Services
+	services  *service.Services
+	jwtSecret string
 }
 
-func NewHandler(services *service.Services) *Handler {
+func NewHandler(services *service.Services, jwtSecret string) *Handler {
 	return &Handler{
 		services: services,
+		jwtSecret: jwtSecret,
 	}
 }
 
@@ -38,7 +40,7 @@ func (h *Handler) InitRoutes() *mux.Router {
 
 	//client section
 	client := router.PathPrefix("/client").Subrouter()
-	// client.Use(h.authMiddleware("client")) // <- TODO: ADD JWT
+	client.Use(h.authMiddleware("client"))
 
 	client.HandleFunc("/banks", h.getBanks).Methods(http.MethodGet)
 	client.HandleFunc("/enterprises", h.getEnterprises).Methods(http.MethodGet)
@@ -58,7 +60,7 @@ func (h *Handler) InitRoutes() *mux.Router {
 
 	//manager section
 	manager := router.PathPrefix("/manager").Subrouter()
-	// manager.Use(h.authMiddleware("manager")) <- TODO: ADD JWT
+	manager.Use(h.authMiddleware("manager"))
 
 	manager.HandleFunc("/users/{id:[0-9]+}/approve", h.approveUser).Methods(http.MethodPost)
 	manager.HandleFunc("/users/{id:[0-9]+}/history", h.getUserHistory).Methods(http.MethodGet)
@@ -73,7 +75,7 @@ func (h *Handler) InitRoutes() *mux.Router {
 
 	// admin section
 	admin := router.PathPrefix("/admin").Subrouter()
-	// admin.Use(h.authMiddleware("admin")) // TODO: ADD JWT
+	admin.Use(h.authMiddleware("admin"))
 
 	admin.HandleFunc("/logs", h.getAllLogs).Methods(http.MethodGet)
 	admin.HandleFunc("/logs/{id:[0-9]+}/undo", h.undoAction).Methods(http.MethodPost)

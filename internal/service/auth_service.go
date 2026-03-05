@@ -2,18 +2,23 @@ package service
 
 import (
 	"errors"
+	"time"
+
 	"financial_system/internal/domain"
 	"financial_system/internal/repository"
+	"financial_system/pkg/jwt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Auth struct {
-	repo repository.UserRepository
+	repo   repository.UserRepository
+	secret string
+	expire time.Duration
 }
 
-func NewAuthService(repo repository.UserRepository) *Auth {
-	return &Auth{repo: repo}
+func NewAuthService(repo repository.UserRepository, secret string, expire time.Duration) *Auth {
+	return &Auth{repo: repo, secret: secret, expire: expire}
 }
 
 func (s *Auth) SignUp(email, password string) error {
@@ -33,5 +38,21 @@ func (s *Auth) SignUp(email, password string) error {
 }
 
 func (s *Auth) SignIn(email, password string) (string, error) {
-	return "", nil
+	user, err := s.repo.GetUserByEmail(email)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return "", domain.ErrInvalidCredentials
+		}
+		return "", err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		return "", domain.ErrInvalidCredentials
+	}
+
+	if !user.IsActive {
+		return "", domain.ErrUserNotActive
+	}
+
+	return jwt.NewToken(s.secret, user.ID, user.Role, s.expire)
 }
