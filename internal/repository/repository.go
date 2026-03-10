@@ -53,6 +53,11 @@ type DepositRepository interface {
 	TransferDepositToDeposit(userID, fromDepositID, toDepositID int, amount float64) error
 }
 
+type ActionLogRepository interface {
+	Create(log *domain.ActionLog) error
+	GetAll() ([]domain.ActionLog, error)
+}
+
 type Repositories struct {
 	User               UserRepository
 	Bank               BankRepository
@@ -60,6 +65,7 @@ type Repositories struct {
 	Account            AccountRepository
 	Deposit            DepositRepository
 	SalaryApplication  SalaryApplicationRepository
+	ActionLog          ActionLogRepository
 }
 
 func NewRepositories(db *pgxpool.Pool) *Repositories {
@@ -70,5 +76,6 @@ func NewRepositories(db *pgxpool.Pool) *Repositories {
 		Account:           postgres.NewAccountRepo(db),
 		Deposit:           postgres.NewDepositRepo(db),
 		SalaryApplication: postgres.NewSalaryApplicationRepo(db),
+		ActionLog:         postgres.NewActionLogRepo(db),
 	}
 }

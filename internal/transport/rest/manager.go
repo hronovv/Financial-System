@@ -24,6 +24,8 @@ import (
 // @Failure      404  {object}  map[string]string
 // @Router       /manager/users/{id}/approve [post]
 func (h *Handler) approveUser(w http.ResponseWriter, r *http.Request) {
+	managerID := userIDFromRequest(r)
+
 	vars := mux.Vars(r)
 	idStr, ok := vars["id"]
 	if !ok {
@@ -49,6 +51,13 @@ func (h *Handler) approveUser(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusInternalServerError, "не удалось подтвердить пользователя")
 		}
 		return
+	}
+
+	if managerID != 0 {
+		mid := managerID
+		_ = h.services.Audit.LogAction(&mid, "manager_approve_user", map[string]any{
+			"target_user_id": userID,
+		})
 	}
 
 	w.WriteHeader(http.StatusNoContent)
@@ -114,6 +123,8 @@ func parseAccountIDFromRequest(r *http.Request) (int, error) {
 // @Failure      404  {object}  map[string]string
 // @Router       /manager/accounts/{id}/block [post]
 func (h *Handler) blockAccount(w http.ResponseWriter, r *http.Request) {
+	managerID := userIDFromRequest(r)
+
 	accountID, err := parseAccountIDFromRequest(r)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -129,6 +140,13 @@ func (h *Handler) blockAccount(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	if managerID != 0 {
+		mid := managerID
+		_ = h.services.Audit.LogAction(&mid, "manager_block_account", map[string]any{
+			"account_id": accountID,
+		})
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -143,6 +161,8 @@ func (h *Handler) blockAccount(w http.ResponseWriter, r *http.Request) {
 // @Failure      404  {object}  map[string]string
 // @Router       /manager/accounts/{id}/unblock [post]
 func (h *Handler) unblockAccount(w http.ResponseWriter, r *http.Request) {
+	managerID := userIDFromRequest(r)
+
 	accountID, err := parseAccountIDFromRequest(r)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -157,6 +177,13 @@ func (h *Handler) unblockAccount(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusInternalServerError, "не удалось разблокировать счёт")
 		}
 		return
+	}
+
+	if managerID != 0 {
+		mid := managerID
+		_ = h.services.Audit.LogAction(&mid, "manager_unblock_account", map[string]any{
+			"account_id": accountID,
+		})
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -178,6 +205,8 @@ func parseDepositIDFromRequest(r *http.Request) (int, error) {
 // @Failure      404  {object}  map[string]string
 // @Router       /manager/deposits/{id}/block [post]
 func (h *Handler) blockDeposit(w http.ResponseWriter, r *http.Request) {
+	managerID := userIDFromRequest(r)
+
 	depositID, err := parseDepositIDFromRequest(r)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -193,6 +222,13 @@ func (h *Handler) blockDeposit(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	if managerID != 0 {
+		mid := managerID
+		_ = h.services.Audit.LogAction(&mid, "manager_block_deposit", map[string]any{
+			"deposit_id": depositID,
+		})
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -207,6 +243,8 @@ func (h *Handler) blockDeposit(w http.ResponseWriter, r *http.Request) {
 // @Failure      404  {object}  map[string]string
 // @Router       /manager/deposits/{id}/unblock [post]
 func (h *Handler) unblockDeposit(w http.ResponseWriter, r *http.Request) {
+	managerID := userIDFromRequest(r)
+
 	depositID, err := parseDepositIDFromRequest(r)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -221,6 +259,13 @@ func (h *Handler) unblockDeposit(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusInternalServerError, "не удалось разблокировать вклад")
 		}
 		return
+	}
+
+	if managerID != 0 {
+		mid := managerID
+		_ = h.services.Audit.LogAction(&mid, "manager_unblock_deposit", map[string]any{
+			"deposit_id": depositID,
+		})
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -262,6 +307,8 @@ func (h *Handler) getEnterprisesWithEmployees(w http.ResponseWriter, r *http.Req
 // @Failure      404  {object}  map[string]string
 // @Router       /manager/enterprises/{id}/employees [post]
 func (h *Handler) addEmployeeToEnterprise(w http.ResponseWriter, r *http.Request) {
+	managerID := userIDFromRequest(r)
+
 	enterpriseID, err := parseIDFromPath(r, "id", "id предприятия")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -291,6 +338,14 @@ func (h *Handler) addEmployeeToEnterprise(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	if managerID != 0 {
+		mid := managerID
+		_ = h.services.Audit.LogAction(&mid, "manager_add_employee", map[string]any{
+			"enterprise_id": enterpriseID,
+			"user_id":       input.UserID,
+		})
+	}
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -307,6 +362,8 @@ func (h *Handler) addEmployeeToEnterprise(w http.ResponseWriter, r *http.Request
 // @Failure      404  {object}  map[string]string
 // @Router       /manager/enterprises/{enterprise_id}/employees/{user_id} [delete]
 func (h *Handler) removeEmployeeFromEnterprise(w http.ResponseWriter, r *http.Request) {
+	managerID := userIDFromRequest(r)
+
 	vars := mux.Vars(r)
 	enterpriseID, err := strconv.Atoi(vars["enterprise_id"])
 	if err != nil || enterpriseID <= 0 {
@@ -328,6 +385,14 @@ func (h *Handler) removeEmployeeFromEnterprise(w http.ResponseWriter, r *http.Re
 			respondError(w, http.StatusInternalServerError, "не удалось удалить сотрудника")
 		}
 		return
+	}
+
+	if managerID != 0 {
+		mid := managerID
+		_ = h.services.Audit.LogAction(&mid, "manager_remove_employee", map[string]any{
+			"enterprise_id": enterpriseID,
+			"user_id":       userID,
+		})
 	}
 
 	w.WriteHeader(http.StatusNoContent)
@@ -359,6 +424,8 @@ func parseIDFromPath(r *http.Request, key, label string) (int, error) {
 // @Failure      404  {object}  map[string]string
 // @Router       /manager/salary-project/applications/{id}/approve [post]
 func (h *Handler) approveSalaryApplication(w http.ResponseWriter, r *http.Request) {
+	managerID := userIDFromRequest(r)
+
 	applicationID, err := parseIDFromPath(r, "id", "id заявки")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
@@ -378,6 +445,13 @@ func (h *Handler) approveSalaryApplication(w http.ResponseWriter, r *http.Reques
 			respondError(w, http.StatusInternalServerError, "не удалось одобрить заявку")
 		}
 		return
+	}
+
+	if managerID != 0 {
+		mid := managerID
+		_ = h.services.Audit.LogAction(&mid, "manager_approve_salary_application", map[string]any{
+			"application_id": applicationID,
+		})
 	}
 
 	w.WriteHeader(http.StatusNoContent)

@@ -50,6 +50,10 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_ = h.services.Audit.LogAction(nil, "auth_sign_up", map[string]any{
+		"email": input.Email,
+	})
+
 	respondJSON(w, http.StatusCreated, map[string]string{
 		"message": "Регистрация прошла успешно. Ожидайте подтверждения от менеджера.",
 	})
@@ -94,6 +98,10 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	_ = h.services.Audit.LogAction(nil, "auth_sign_in", map[string]any{
+		"email": input.Email,
+	})
 
 	respondJSON(w, http.StatusOK, map[string]string{
 		"token": token,

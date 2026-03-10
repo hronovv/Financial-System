@@ -134,6 +134,13 @@ func (h *Handler) openAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uid := userID
+	_ = h.services.Audit.LogAction(&uid, "client_open_account", map[string]any{
+		"account_id":     account.ID,
+		"bank_id":        input.BankID,
+		"account_number": account.AccountNumber,
+	})
+
 	respondJSON(w, http.StatusCreated, account)
 }
 
@@ -184,6 +191,11 @@ func (h *Handler) closeAccount(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	uid := userID
+	_ = h.services.Audit.LogAction(&uid, "client_close_account", map[string]any{
+		"account_id": accountID,
+	})
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -244,6 +256,19 @@ func (h *Handler) transferFromAccount(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	uid := userID
+	details := map[string]any{
+		"from_account_id": input.FromAccountID,
+		"amount":          input.Amount,
+	}
+	if input.ToAccountID != nil {
+		details["to_account_id"] = *input.ToAccountID
+	}
+	if input.ToDepositID != nil {
+		details["to_deposit_id"] = *input.ToDepositID
+	}
+	_ = h.services.Audit.LogAction(&uid, "client_transfer_from_account", details)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -339,6 +364,13 @@ func (h *Handler) openDeposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uid := userID
+	_ = h.services.Audit.LogAction(&uid, "client_open_deposit", map[string]any{
+		"deposit_id":    deposit.ID,
+		"bank_id":       input.BankID,
+		"interest_rate": input.InterestRate,
+	})
+
 	respondJSON(w, http.StatusCreated, deposit)
 }
 
@@ -387,6 +419,11 @@ func (h *Handler) closeDeposit(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	uid := userID
+	_ = h.services.Audit.LogAction(&uid, "client_close_deposit", map[string]any{
+		"deposit_id": depositID,
+	})
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -462,6 +499,19 @@ func (h *Handler) transferFromDeposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uid := userID
+	details := map[string]any{
+		"from_deposit_id": input.FromDepositID,
+		"amount":          input.Amount,
+	}
+	if input.ToAccountID != nil {
+		details["to_account_id"] = *input.ToAccountID
+	}
+	if input.ToDepositID != nil {
+		details["to_deposit_id"] = *input.ToDepositID
+	}
+	_ = h.services.Audit.LogAction(&uid, "client_transfer_from_deposit", details)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -534,6 +584,13 @@ func (h *Handler) accumulateDeposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uid := userID
+	_ = h.services.Audit.LogAction(&uid, "client_accumulate_deposit", map[string]any{
+		"from_account_id": input.FromAccountID,
+		"deposit_id":      depositID,
+		"amount":          input.Amount,
+	})
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -585,6 +642,13 @@ func (h *Handler) applyForSalaryProject(w http.ResponseWriter, r *http.Request) 
 		}
 		return
 	}
+
+	uid := userID
+	_ = h.services.Audit.LogAction(&uid, "client_salary_application_create", map[string]any{
+		"application_id": app.ID,
+		"enterprise_id":  input.EnterpriseID,
+		"amount":         input.Amount,
+	})
 
 	respondJSON(w, http.StatusCreated, app)
 }
@@ -651,6 +715,18 @@ func (h *Handler) receiveSalary(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	uid := userID
+	details := map[string]any{
+		"application_id": input.ApplicationID,
+	}
+	if input.ToAccountID != nil {
+		details["to_account_id"] = *input.ToAccountID
+	}
+	if input.ToDepositID != nil {
+		details["to_deposit_id"] = *input.ToDepositID
+	}
+	_ = h.services.Audit.LogAction(&uid, "client_salary_receive", details)
 
 	w.WriteHeader(http.StatusNoContent)
 }

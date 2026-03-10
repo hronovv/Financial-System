@@ -51,6 +51,14 @@ type SalaryProjectService interface {
 	ReceiveSalary(userID, applicationID int, toAccountID, toDepositID *int) error
 }
 
+type AuditLogger interface {
+	LogAction(userID *int, action string, details any) error
+}
+
+type AdminService interface {
+	GetAllLogs() ([]domain.ActionLog, error)
+}
+
 type Services struct {
 	Auth          AuthService
 	Bank          BankService
@@ -59,6 +67,8 @@ type Services struct {
 	Deposit       DepositService
 	Manager       ManagerService
 	SalaryProject SalaryProjectService
+	Audit         AuditLogger
+	Admin         AdminService
 }
 
 func NewServices(deps *repository.Repositories, jwtSecret string, jwtExpire time.Duration) *Services {
@@ -70,5 +80,7 @@ func NewServices(deps *repository.Repositories, jwtSecret string, jwtExpire time
 		Deposit:       NewDepositService(deps.Deposit),
 		Manager:       NewManagerService(deps.User, deps.Account, deps.Deposit, deps.Enterprise, deps.SalaryApplication),
 		SalaryProject: NewSalaryProjectService(deps.Enterprise, deps.SalaryApplication),
+		Audit:         NewAuditLogger(deps.ActionLog),
+		Admin:         NewAdminService(deps.ActionLog),
 	}
 }
