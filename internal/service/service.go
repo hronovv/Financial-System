@@ -58,6 +58,7 @@ type AuditLogger interface {
 type AdminService interface {
 	GetAllLogs() ([]domain.ActionLog, error)
 	UndoAction(logID int, deps *repository.Repositories) error
+	UndoAllActions(deps *repository.Repositories) error
 }
 
 type Services struct {

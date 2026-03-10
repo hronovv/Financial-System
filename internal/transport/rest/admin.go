@@ -70,3 +70,21 @@ func (h *Handler) undoAction(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// undoAllActions godoc
+// @Summary      Undo all actions
+// @Description  Undoes every undoable client/manager action (newest first). Skips auth_sign_up, auth_sign_in and already undone.
+// @Tags         admin
+// @Security     BearerAuth
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      500  {object}  map[string]string
+// @Router       /admin/logs/undo-all [post]
+func (h *Handler) undoAllActions(w http.ResponseWriter, r *http.Request) {
+	if err := h.services.Admin.UndoAllActions(h.services.Repositories); err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

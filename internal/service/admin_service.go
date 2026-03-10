@@ -22,6 +22,26 @@ func (a *Admin) GetAllLogs() ([]domain.ActionLog, error) {
 	return a.logRepo.GetAll()
 }
 
+// UndoAllActions undoes every undoable log entry (newest first); skips auth_sign_up/auth_sign_in and already undone.
+func (a *Admin) UndoAllActions(deps *repository.Repositories) error {
+	logs, err := a.logRepo.GetAll()
+	if err != nil {
+		return err
+	}
+	for _, l := range logs {
+		if l.IsUndone {
+			continue
+		}
+		if l.Action == "auth_sign_up" || l.Action == "auth_sign_in" {
+			continue
+		}
+		if err := a.UndoAction(l.ID, deps); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // UndoAction reverts the action described by the log entry (logical undo).
 func (a *Admin) UndoAction(logID int, deps *repository.Repositories) error {
 	ctx := context.Background()

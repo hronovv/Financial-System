@@ -17,7 +17,7 @@ type Handler struct {
 
 func NewHandler(services *service.Services, jwtSecret string) *Handler {
 	return &Handler{
-		services: services,
+		services:  services,
 		jwtSecret: jwtSecret,
 	}
 }
@@ -80,6 +80,7 @@ func (h *Handler) InitRoutes() *mux.Router {
 	admin.Use(h.authMiddleware("admin"))
 
 	admin.HandleFunc("/logs", h.getAllLogs).Methods(http.MethodGet)
+	admin.HandleFunc("/logs/undo-all", h.undoAllActions).Methods(http.MethodPost)
 	admin.HandleFunc("/logs/{id:[0-9]+}/undo", h.undoAction).Methods(http.MethodPost)
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
