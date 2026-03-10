@@ -130,7 +130,7 @@ func (h *Handler) openAccount(w http.ResponseWriter, r *http.Request) {
 
 	account, err := h.services.Account.OpenAccount(userID, input.BankID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "не удалось открыть счет")
+		respondError(w, http.StatusBadRequest, "не удалось открыть счет")
 		return
 	}
 

@@ -281,6 +281,36 @@ paths:
       summary: Undo action
       tags:
       - admin
+  /admin/logs/undo-all:
+    post:
+      description: Undoes every undoable client/manager action (newest first). Skips
+        auth_sign_up, auth_sign_in and already undone.
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Undo all actions
+      tags:
+      - admin
   /auth/sign-in:
     post:
       consumes:
