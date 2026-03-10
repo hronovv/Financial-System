@@ -6,9 +6,8 @@ import (
 
 	"financial_system/internal/domain"
 	"financial_system/internal/repository"
+	"financial_system/pkg/hasher"
 	"financial_system/pkg/jwt"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Auth struct {
@@ -22,14 +21,14 @@ func NewAuthService(repo repository.UserRepository, secret string, expire time.D
 }
 
 func (s *Auth) SignUp(email, password string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := hasher.Hash(password)
 	if err != nil {
 		return errors.New("не удалось обработать пароль")
 	}
 
 	user := domain.User{
 		Email:        email,
-		PasswordHash: string(hashedPassword),
+		PasswordHash: hashedPassword,
 		Role:         domain.RoleClient, 
 		IsActive:     false,            
 	}
@@ -46,7 +45,7 @@ func (s *Auth) SignIn(email, password string) (string, error) {
 		return "", err
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+	if !hasher.Check(password, user.PasswordHash) {
 		return "", domain.ErrInvalidCredentials
 	}
 

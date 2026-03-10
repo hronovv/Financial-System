@@ -22,14 +22,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Возвращает все записи action_logs в порядке убывания времени.",
+                "description": "Returns all action_logs ordered by created_at desc.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "admin"
                 ],
-                "summary": "Все логи действий",
+                "summary": "All action logs",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -68,14 +68,15 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
+                "description": "Logical undo of the action by log entry. Not for auth_sign_up/auth_sign_in.",
                 "tags": [
                     "admin"
                 ],
-                "summary": "Отменить действие",
+                "summary": "Undo action",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID записи лога",
+                        "description": "Log entry ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -126,7 +127,7 @@ const docTemplate = `{
         },
         "/auth/sign-in": {
             "post": {
-                "description": "Вход по email и паролю. Возвращает JWT для заголовка Authorization: Bearer \u0026lt;token\u0026gt;. Аккаунт должен быть подтверждён (is_active).",
+                "description": "Sign in with email and password. Returns JWT for Authorization: Bearer \u0026lt;token\u0026gt;. Account must be approved (is_active).",
                 "consumes": [
                     "application/json"
                 ],
@@ -136,7 +137,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Вход",
+                "summary": "Sign in",
                 "parameters": [
                     {
                         "description": "email, password",
@@ -190,7 +191,7 @@ const docTemplate = `{
         },
         "/auth/sign-up": {
             "post": {
-                "description": "Регистрация нового клиента. Требует подтверждения менеджером (is_active).",
+                "description": "Register new client. Requires manager approval (is_active).",
                 "consumes": [
                     "application/json"
                 ],
@@ -200,10 +201,10 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Регистрация клиента",
+                "summary": "Client registration",
                 "parameters": [
                     {
-                        "description": "email, password (мин. 8 символов)",
+                        "description": "email, password (min 8 chars)",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -250,7 +251,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Открывает счёт в указанном банке. user_id берётся из JWT.",
+                "description": "Opens an account in the given bank. user_id from JWT.",
                 "consumes": [
                     "application/json"
                 ],
@@ -260,7 +261,7 @@ const docTemplate = `{
                 "tags": [
                     "client"
                 ],
-                "summary": "Открыть счёт",
+                "summary": "Open account",
                 "parameters": [
                     {
                         "description": "bank_id",
@@ -307,7 +308,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Возвращает список транзакций по счёту. user_id из JWT. Query: account_id.",
+                "description": "Returns transactions for the account. user_id from JWT. Query: account_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -317,11 +318,11 @@ const docTemplate = `{
                 "tags": [
                     "client"
                 ],
-                "summary": "История операций по счёту",
+                "summary": "Account history",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID счёта",
+                        "description": "Account ID",
                         "name": "account_id",
                         "in": "query",
                         "required": true
@@ -383,7 +384,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Перевод со счёта на другой счёт или вклад (внутри одного пользователя). Указать либо to_account_id, либо to_deposit_id.",
+                "description": "Transfer from account to another account or deposit (same user). Provide either to_account_id or to_deposit_id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -393,10 +394,10 @@ const docTemplate = `{
                 "tags": [
                     "client"
                 ],
-                "summary": "Перевод со счёта",
+                "summary": "Transfer from account",
                 "parameters": [
                     {
-                        "description": "from_account_id, to_account_id или to_deposit_id, amount",
+                        "description": "from_account_id, to_account_id or to_deposit_id, amount",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -455,7 +456,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Закрывает счёт (is_blocked=true). Баланс должен быть 0. user_id из JWT.",
+                "description": "Closes account (is_blocked=true). Balance must be 0. user_id from JWT.",
                 "consumes": [
                     "application/json"
                 ],
@@ -465,11 +466,11 @@ const docTemplate = `{
                 "tags": [
                     "client"
                 ],
-                "summary": "Закрыть счёт",
+                "summary": "Close account",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID счёта",
+                        "description": "Account ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -516,7 +517,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Возвращает все банки системы. Требуется роль client и JWT.",
+                "description": "Returns all banks. Requires client role and JWT.",
                 "consumes": [
                     "application/json"
                 ],
@@ -526,7 +527,7 @@ const docTemplate = `{
                 "tags": [
                     "client"
                 ],
-                "summary": "Список банков",
+                "summary": "List banks",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -556,7 +557,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Создаёт вклад в банке с указанной процентной ставкой. Баланс при создании 0.",
+                "description": "Creates a deposit in a bank with given interest rate. Initial balance 0.",
                 "consumes": [
                     "application/json"
                 ],
@@ -566,7 +567,7 @@ const docTemplate = `{
                 "tags": [
                     "client"
                 ],
-                "summary": "Открыть вклад",
+                "summary": "Open deposit",
                 "parameters": [
                     {
                         "description": "bank_id, interest_rate",
@@ -613,17 +614,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Перевод с вклада на счёт или на другой вклад того же пользователя. Указать ровно один из to_account_id или to_deposit_id.",
+                "description": "Transfer from deposit to account or another deposit (same user). Provide exactly one of to_account_id or to_deposit_id.",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
                     "client"
                 ],
-                "summary": "Перевод со вклада",
+                "summary": "Transfer from deposit",
                 "parameters": [
                     {
-                        "description": "from_deposit_id, to_account_id или to_deposit_id, amount",
+                        "description": "from_deposit_id, to_account_id or to_deposit_id, amount",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -682,15 +683,15 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Закрывает вклад (is_blocked=true). Баланс должен быть 0.",
+                "description": "Closes deposit (is_blocked=true). Balance must be 0.",
                 "tags": [
                     "client"
                 ],
-                "summary": "Закрыть вклад",
+                "summary": "Close deposit",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID вклада",
+                        "description": "Deposit ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -737,18 +738,18 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Переводит средства со счёта пользователя на указанный вклад (id в path).",
+                "description": "Transfers from user account to the deposit (id in path).",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
                     "client"
                 ],
-                "summary": "Начисление на вклад (пополнение со счёта)",
+                "summary": "Accumulate deposit (top-up from account)",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID вклада (куда пополняем)",
+                        "description": "Deposit ID (target)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -813,7 +814,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Возвращает все предприятия. Требуется роль client и JWT.",
+                "description": "Returns all enterprises. Requires client role and JWT.",
                 "consumes": [
                     "application/json"
                 ],
@@ -823,7 +824,7 @@ const docTemplate = `{
                 "tags": [
                     "client"
                 ],
-                "summary": "Список предприятий",
+                "summary": "List enterprises",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -853,14 +854,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Создаёт заявку со статусом pending. Только сотрудник предприятия может подать заявку.",
+                "description": "Creates application with status pending. Only enterprise employee.",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
                     "client"
                 ],
-                "summary": "Подать заявку на зарплатный проект",
+                "summary": "Apply for salary project",
                 "parameters": [
                     {
                         "description": "enterprise_id, amount",
@@ -925,17 +926,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Зачисляет зарплату по одобренной заявке на указанный счёт или вклад (один из to_account_id, to_deposit_id обязателен).",
+                "description": "Credits salary for approved application to given account or deposit (one of to_account_id, to_deposit_id required).",
                 "consumes": [
                     "application/json"
                 ],
                 "tags": [
                     "client"
                 ],
-                "summary": "Получить зарплату",
+                "summary": "Receive salary",
                 "parameters": [
                     {
-                        "description": "application_id, to_account_id или to_deposit_id",
+                        "description": "application_id, to_account_id or to_deposit_id",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -997,11 +998,11 @@ const docTemplate = `{
                 "tags": [
                     "manager"
                 ],
-                "summary": "Заблокировать счёт",
+                "summary": "Block account",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID счёта",
+                        "description": "Account ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1051,11 +1052,11 @@ const docTemplate = `{
                 "tags": [
                     "manager"
                 ],
-                "summary": "Разблокировать счёт",
+                "summary": "Unblock account",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID счёта",
+                        "description": "Account ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1102,15 +1103,15 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Менеджер может заблокировать вклад в любой момент (без проверки на баланс).",
+                "description": "Manager can block deposit at any time (no balance check).",
                 "tags": [
                     "manager"
                 ],
-                "summary": "Заблокировать вклад",
+                "summary": "Block deposit",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID вклада",
+                        "description": "Deposit ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1160,11 +1161,11 @@ const docTemplate = `{
                 "tags": [
                     "manager"
                 ],
-                "summary": "Разблокировать вклад",
+                "summary": "Unblock deposit",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID вклада",
+                        "description": "Deposit ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1214,7 +1215,7 @@ const docTemplate = `{
                 "tags": [
                     "manager"
                 ],
-                "summary": "Предприятия с сотрудниками",
+                "summary": "Enterprises with employees",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1244,22 +1245,22 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Pending заявки этого сотрудника по предприятию автоматически отклоняются.",
+                "description": "Employee's pending applications for this enterprise are rejected.",
                 "tags": [
                     "manager"
                 ],
-                "summary": "Удалить сотрудника из предприятия",
+                "summary": "Remove employee from enterprise",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID предприятия",
+                        "description": "Enterprise ID",
                         "name": "enterprise_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "ID пользователя",
+                        "description": "User ID",
                         "name": "user_id",
                         "in": "path",
                         "required": true
@@ -1312,11 +1313,11 @@ const docTemplate = `{
                 "tags": [
                     "manager"
                 ],
-                "summary": "Добавить сотрудника в предприятие",
+                "summary": "Add employee to enterprise",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID предприятия",
+                        "description": "Enterprise ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1372,15 +1373,15 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Одобряет заявку (status = approved). Баланс предприятия должен быть не меньше суммы заявки.",
+                "description": "Approves application (status = approved). Enterprise balance must be \u003e= application amount.",
                 "tags": [
                     "manager"
                 ],
-                "summary": "Подтвердить заявку на зарплатный проект",
+                "summary": "Approve salary application",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID заявки",
+                        "description": "Application ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1427,15 +1428,15 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Устанавливает is_active = true для пользователя с ролью client. После этого клиент может войти по SignIn.",
+                "description": "Sets is_active = true for user with role client. Client can then sign in.",
                 "tags": [
                     "manager"
                 ],
-                "summary": "Подтвердить регистрацию клиента",
+                "summary": "Approve client registration",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID пользователя (клиента)",
+                        "description": "User (client) ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1491,15 +1492,15 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Объединённая история по всем счетам пользователя (аналогично /client/accounts/history по каждому счёту), отсортировано по дате.",
+                "description": "Merged history for all user accounts, sorted by date.",
                 "tags": [
                     "manager"
                 ],
-                "summary": "История операций пользователя",
+                "summary": "User transaction history",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID пользователя",
+                        "description": "User ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1859,7 +1860,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{"http"},
 	Title:            "Financial System API",
-	Description:      "API для управления финансами. Клиент, менеджер и администратор.",
+	Description:      "Finance management API. Client, manager and admin roles.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
