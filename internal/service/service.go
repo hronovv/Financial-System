@@ -57,6 +57,7 @@ type AuditLogger interface {
 
 type AdminService interface {
 	GetAllLogs() ([]domain.ActionLog, error)
+	UndoAction(logID int, deps *repository.Repositories) error
 }
 
 type Services struct {
@@ -69,6 +70,7 @@ type Services struct {
 	SalaryProject SalaryProjectService
 	Audit         AuditLogger
 	Admin         AdminService
+	Repositories  *repository.Repositories
 }
 
 func NewServices(deps *repository.Repositories, jwtSecret string, jwtExpire time.Duration) *Services {
@@ -82,5 +84,6 @@ func NewServices(deps *repository.Repositories, jwtSecret string, jwtExpire time
 		SalaryProject: NewSalaryProjectService(deps.Enterprise, deps.SalaryApplication),
 		Audit:         NewAuditLogger(deps.ActionLog),
 		Admin:         NewAdminService(deps.ActionLog),
+		Repositories:  deps,
 	}
 }

@@ -152,3 +152,124 @@ func (r *SalaryApplicationRepo) PaySalary(applicationID int, toAccountID *int, t
 
 	return tx.Commit(ctx)
 }
+
+// UndoPaySalary делает логический откат выплаты зарплаты:
+// возвращает сумму на баланс предприятия, списывает её со счёта/вклада клиента,
+// добавляет запись в transactions и переводит заявку в статус pending, обнуляя paid_at.
+func (r *SalaryApplicationRepo) UndoPaySalary(applicationID int, toAccountID *int, toDepositID *int) error {
+	ctx := context.Background()
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	var app domain.SalaryApplication
+	err = tx.QueryRow(ctx,
+		`SELECT id, user_id, enterprise_id, amount, status, paid_at
+		 FROM salary_applications WHERE id = $1 FOR UPDATE`,
+		applicationID,
+	).Scan(&app.ID, &app.UserID, &app.EnterpriseID, &app.Amount, &app.Status, &app.PaidAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.ErrNotFound
+		}
+		return err
+	}
+	if app.PaidAt == nil {
+		return domain.ErrApplicationNotApproved
+	}
+
+	hasAccount := toAccountID != nil
+	hasDeposit := toDepositID != nil
+	if hasAccount == hasDeposit {
+		return domain.ErrInvalidTransferTarget
+	}
+
+	// Вернуть деньги на предприятие.
+	if _, err := tx.Exec(ctx,
+		`UPDATE enterprises SET balance = balance + $1 WHERE id = $2`,
+		app.Amount, app.EnterpriseID,
+	); err != nil {
+		return err
+	}
+
+	var fromAccID, fromDepID *int
+
+	if hasAccount {
+		var accUserID int
+		var accBalance float64
+		err = tx.QueryRow(ctx,
+			`SELECT user_id, balance FROM accounts WHERE id = $1 FOR UPDATE`,
+			*toAccountID,
+		).Scan(&accUserID, &accBalance)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return domain.ErrAccountNotFound
+			}
+			return err
+		}
+		if accUserID != app.UserID {
+			return domain.ErrForbidden
+		}
+		if accBalance < app.Amount {
+			return domain.ErrInsufficientFunds
+		}
+		if _, err := tx.Exec(ctx,
+			`UPDATE accounts SET balance = balance - $1 WHERE id = $2`,
+			app.Amount, *toAccountID,
+		); err != nil {
+			return err
+		}
+		fromAccID = toAccountID
+	} else if hasDeposit {
+		var depUserID int
+		var depBalance float64
+		err = tx.QueryRow(ctx,
+			`SELECT user_id, balance FROM deposits WHERE id = $1 FOR UPDATE`,
+			*toDepositID,
+		).Scan(&depUserID, &depBalance)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return domain.ErrDepositNotFound
+			}
+			return err
+		}
+		if depUserID != app.UserID {
+			return domain.ErrForbidden
+		}
+		if depBalance < app.Amount {
+			return domain.ErrInsufficientFunds
+		}
+		if _, err := tx.Exec(ctx,
+			`UPDATE deposits SET balance = balance - $1 WHERE id = $2`,
+			app.Amount, *toDepositID,
+		); err != nil {
+			return err
+		}
+		fromDepID = toDepositID
+	} else {
+		return domain.ErrInvalidTransferTarget
+	}
+
+	// Логируем обратную транзакцию.
+	if _, err := tx.Exec(ctx,
+		`INSERT INTO transactions (from_account_id, from_deposit_id, to_account_id, to_deposit_id, amount, transaction_type)
+		 VALUES ($1, $2, NULL, NULL, $3, $4)`,
+		fromAccID, fromDepID, app.Amount, "salary_undo",
+	); err != nil {
+		return err
+	}
+
+	// Обнуляем paid_at и возвращаем status в pending.
+	if _, err := tx.Exec(ctx,
+		`UPDATE salary_applications
+		 SET status = $1, paid_at = NULL, updated_at = NOW()
+		 WHERE id = $2`,
+		domain.SalaryApplicationStatusPending, applicationID,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}

@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"financial_system/internal/domain"
 	"financial_system/internal/repository/postgres"
 
@@ -33,6 +35,7 @@ type SalaryApplicationRepository interface {
 	UpdateStatus(id int, status string) error
 	RejectPendingByUserAndEnterprise(userID, enterpriseID int) error
 	PaySalary(applicationID int, toAccountID *int, toDepositID *int) error
+	UndoPaySalary(applicationID int, toAccountID *int, toDepositID *int) error
 }
 
 type AccountRepository interface {
@@ -56,6 +59,8 @@ type DepositRepository interface {
 type ActionLogRepository interface {
 	Create(log *domain.ActionLog) error
 	GetAll() ([]domain.ActionLog, error)
+	GetByIDForUpdate(ctx context.Context, id int) (*domain.ActionLog, error)
+	MarkUndone(ctx context.Context, id int) error
 }
 
 type Repositories struct {

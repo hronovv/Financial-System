@@ -3,9 +3,11 @@ package postgres
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"financial_system/internal/domain"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -68,5 +70,28 @@ func (r *ActionLogRepo) GetAll() ([]domain.ActionLog, error) {
 
 	return logs, nil
 }
+
+func (r *ActionLogRepo) GetByIDForUpdate(ctx context.Context, id int) (*domain.ActionLog, error) {
+	var l domain.ActionLog
+	err := r.db.QueryRow(ctx, `
+		SELECT id, user_id, action_type, details, is_undone, created_at
+		FROM action_logs
+		WHERE id = $1
+		FOR UPDATE
+	`, id).Scan(&l.ID, &l.UserID, &l.Action, &l.Details, &l.IsUndone, &l.CreatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+	return &l, nil
+}
+
+func (r *ActionLogRepo) MarkUndone(ctx context.Context, id int) error {
+	_, err := r.db.Exec(ctx, `UPDATE action_logs SET is_undone = TRUE WHERE id = $1`, id)
+	return err
+}
+
 
 
