@@ -17,6 +17,23 @@ definitions:
       user_id:
         type: integer
     type: object
+  financial_system_internal_domain.ActionLog:
+    properties:
+      action_type:
+        type: string
+      created_at:
+        type: string
+      details:
+        items:
+          type: integer
+        type: array
+      id:
+        type: integer
+      is_undone:
+        type: boolean
+      user_id:
+        type: integer
+    type: object
   financial_system_internal_domain.Bank:
     properties:
       id:
@@ -196,7 +213,28 @@ info:
 paths:
   /admin/logs:
     get:
-      responses: {}
+      description: Возвращает все записи action_logs в порядке убывания времени.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/financial_system_internal_domain.ActionLog'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       security:
       - BearerAuth: []
       summary: Все логи действий

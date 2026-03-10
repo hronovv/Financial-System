@@ -19,11 +19,43 @@
                         "BearerAuth": []
                     }
                 ],
+                "description": "Возвращает все записи action_logs в порядке убывания времени.",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "admin"
                 ],
                 "summary": "Все логи действий",
-                "responses": {}
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/financial_system_internal_domain.ActionLog"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
             }
         },
         "/admin/logs/{id}/undo": {
@@ -1482,6 +1514,32 @@
                     "type": "integer"
                 },
                 "is_blocked": {
+                    "type": "boolean"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "financial_system_internal_domain.ActionLog": {
+            "type": "object",
+            "properties": {
+                "action_type": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_undone": {
                     "type": "boolean"
                 },
                 "user_id": {

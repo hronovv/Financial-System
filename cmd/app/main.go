@@ -21,7 +21,6 @@ import (
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
-
 func main() {
 	cfg := config.MustLoad()
 	dbPool, err := database.NewPostgresClient(context.Background(), database.ConnectionInfo{
