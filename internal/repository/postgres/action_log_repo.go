@@ -25,7 +25,6 @@ func (r *ActionLogRepo) Create(log *domain.ActionLog) error {
 	var details any
 	if len(log.Details) != 0 {
 		if err := json.Unmarshal(log.Details, &details); err != nil {
-			// если Details уже сериализован, пишем как есть
 			details = json.RawMessage(log.Details)
 		}
 	}

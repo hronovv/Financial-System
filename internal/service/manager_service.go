@@ -25,7 +25,7 @@ func NewManagerService(userRepo repository.UserRepository, accountRepo repositor
 	}
 }
 
-// ApproveUser устанавливает is_active для пользователя с ролью client.
+// ApproveUser sets is_active for a user with role client.
 func (s *Manager) ApproveUser(userID int) error {
 	user, err := s.userRepo.GetUserByID(userID)
 	if err != nil {
@@ -40,7 +40,7 @@ func (s *Manager) ApproveUser(userID int) error {
 	return s.userRepo.SetUserActive(userID, true)
 }
 
-// GetUserHistory возвращает объединённую историю операций по всем счетам пользователя.
+// GetUserHistory returns merged transaction history for all of the user's accounts.
 func (s *Manager) GetUserHistory(userID int) ([]domain.Transaction, error) {
 	accounts, err := s.accountRepo.GetAccountsByUserID(userID)
 	if err != nil {
@@ -70,7 +70,7 @@ func (s *Manager) GetUserHistory(userID int) ([]domain.Transaction, error) {
 	return all, nil
 }
 
-// BlockAccount блокирует счёт.
+// BlockAccount blocks the account.
 func (s *Manager) BlockAccount(accountID int) error {
 	_, err := s.accountRepo.GetAccountByID(accountID)
 	if err != nil {
@@ -79,7 +79,7 @@ func (s *Manager) BlockAccount(accountID int) error {
 	return s.accountRepo.SetAccountBlocked(accountID, true)
 }
 
-// UnblockAccount снимает блокировку счёта.
+// UnblockAccount unblocks the account.
 func (s *Manager) UnblockAccount(accountID int) error {
 	_, err := s.accountRepo.GetAccountByID(accountID)
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *Manager) UnblockAccount(accountID int) error {
 	return s.accountRepo.SetAccountBlocked(accountID, false)
 }
 
-// BlockDeposit блокирует вклад.
+// BlockDeposit blocks the deposit.
 func (s *Manager) BlockDeposit(depositID int) error {
 	_, err := s.depositRepo.GetDepositByID(depositID)
 	if err != nil {
@@ -97,7 +97,7 @@ func (s *Manager) BlockDeposit(depositID int) error {
 	return s.depositRepo.SetDepositBlocked(depositID, true)
 }
 
-// UnblockDeposit снимает блокировку вклада.
+// UnblockDeposit unblocks the deposit.
 func (s *Manager) UnblockDeposit(depositID int) error {
 	_, err := s.depositRepo.GetDepositByID(depositID)
 	if err != nil {
@@ -106,12 +106,12 @@ func (s *Manager) UnblockDeposit(depositID int) error {
 	return s.depositRepo.SetDepositBlocked(depositID, false)
 }
 
-// GetEnterprisesWithEmployees возвращает предприятия со списками ID сотрудников.
+// GetEnterprisesWithEmployees returns enterprises with their employee user IDs.
 func (s *Manager) GetEnterprisesWithEmployees() ([]domain.EnterpriseWithEmployees, error) {
 	return s.enterpriseRepo.GetEnterprisesWithEmployees()
 }
 
-// AddEmployee привязывает пользователя к предприятию как сотрудника.
+// AddEmployee adds a user as an employee of the enterprise.
 func (s *Manager) AddEmployee(enterpriseID, userID int) error {
 	_, err := s.enterpriseRepo.GetEnterpriseByID(enterpriseID)
 	if err != nil {
@@ -120,7 +120,7 @@ func (s *Manager) AddEmployee(enterpriseID, userID int) error {
 	return s.enterpriseRepo.AddEmployee(enterpriseID, userID)
 }
 
-// RemoveEmployee отвязывает сотрудника от предприятия; его pending-заявки отклоняются.
+// RemoveEmployee removes the employee; their pending applications are rejected.
 func (s *Manager) RemoveEmployee(enterpriseID, userID int) error {
 	_, err := s.enterpriseRepo.GetEnterpriseByID(enterpriseID)
 	if err != nil {
@@ -132,7 +132,7 @@ func (s *Manager) RemoveEmployee(enterpriseID, userID int) error {
 	return s.enterpriseRepo.RemoveEmployee(enterpriseID, userID)
 }
 
-// ApproveSalaryApplication одобряет заявку; при недостатке баланса предприятия возвращает ошибку.
+// ApproveSalaryApplication approves the application; fails if enterprise balance is insufficient.
 func (s *Manager) ApproveSalaryApplication(applicationID int) error {
 	app, err := s.salaryRepo.GetByID(applicationID)
 	if err != nil {

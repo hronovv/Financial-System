@@ -13,7 +13,7 @@ import (
 
 // @title           Financial System API
 // @version         1.0
-// @description     API для управления финансами. Клиент, менеджер и администратор.
+// @description     Finance management API. Client, manager and admin roles.
 // @host            localhost:8080
 // @BasePath        /
 // @schemes         http

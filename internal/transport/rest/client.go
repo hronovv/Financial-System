@@ -10,18 +10,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// openAccountRequest тело запроса POST /client/accounts
+// openAccountRequest is the body for POST /client/accounts.
 type openAccountRequest struct {
 	BankID int `json:"bank_id" example:"1"`
 }
 
-// openDepositRequest тело запроса POST /client/deposits
+// openDepositRequest is the body for POST /client/deposits.
 type openDepositRequest struct {
 	BankID       int     `json:"bank_id" example:"1"`
 	InterestRate float64 `json:"interest_rate" example:"5.5"`
 }
 
-// transferFromAccountRequest тело запроса POST /client/accounts/transfer
+// transferFromAccountRequest is the body for POST /client/accounts/transfer.
 type transferFromAccountRequest struct {
 	FromAccountID int      `json:"from_account_id" example:"10"`
 	ToAccountID   *int     `json:"to_account_id,omitempty" example:"11"`
@@ -29,13 +29,13 @@ type transferFromAccountRequest struct {
 	Amount        float64 `json:"amount" example:"100.50"`
 }
 
-// applySalaryProjectRequest тело запроса POST /client/salary-project/apply
+// applySalaryProjectRequest is the body for POST /client/salary-project/apply.
 type applySalaryProjectRequest struct {
 	EnterpriseID int     `json:"enterprise_id" example:"1"`
 	Amount       float64 `json:"amount" example:"50000"`
 }
 
-// transferFromDepositRequest тело запроса POST /client/deposits/transfer
+// transferFromDepositRequest is the body for POST /client/deposits/transfer.
 type transferFromDepositRequest struct {
 	FromDepositID int   `json:"from_deposit_id" example:"3"`
 	ToAccountID   *int  `json:"to_account_id,omitempty" example:"10"`
@@ -43,13 +43,13 @@ type transferFromDepositRequest struct {
 	Amount        float64 `json:"amount" example:"100.50"`
 }
 
-// accumulateDepositRequest тело запроса POST /client/deposits/{id}/accumulate
+// accumulateDepositRequest is the body for POST /client/deposits/{id}/accumulate.
 type accumulateDepositRequest struct {
 	FromAccountID int     `json:"from_account_id" example:"10"`
 	Amount        float64 `json:"amount" example:"500"`
 }
 
-// receiveSalaryRequest тело запроса POST /client/salary-project/receive
+// receiveSalaryRequest is the body for POST /client/salary-project/receive.
 type receiveSalaryRequest struct {
 	ApplicationID int  `json:"application_id" example:"1"`
 	ToAccountID   *int `json:"to_account_id,omitempty" example:"5"`
@@ -57,8 +57,8 @@ type receiveSalaryRequest struct {
 }
 
 // getBanks godoc
-// @Summary      Список банков
-// @Description  Возвращает все банки системы. Требуется роль client и JWT.
+// @Summary      List banks
+// @Description  Returns all banks. Requires client role and JWT.
 // @Tags         client
 // @Accept       json
 // @Produce      json
@@ -77,8 +77,8 @@ func (h *Handler) getBanks(w http.ResponseWriter, r *http.Request) {
 }
 
 // getEnterprises godoc
-// @Summary      Список предприятий
-// @Description  Возвращает все предприятия. Требуется роль client и JWT.
+// @Summary      List enterprises
+// @Description  Returns all enterprises. Requires client role and JWT.
 // @Tags         client
 // @Accept       json
 // @Produce      json
@@ -97,8 +97,8 @@ func (h *Handler) getEnterprises(w http.ResponseWriter, r *http.Request) {
 }
 
 // openAccount godoc
-// @Summary      Открыть счёт
-// @Description  Открывает счёт в указанном банке. user_id берётся из JWT.
+// @Summary      Open account
+// @Description  Opens an account in the given bank. user_id from JWT.
 // @Tags         client
 // @Accept       json
 // @Produce      json
@@ -145,13 +145,13 @@ func (h *Handler) openAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 // closeAccount godoc
-// @Summary      Закрыть счёт
-// @Description  Закрывает счёт (is_blocked=true). Баланс должен быть 0. user_id из JWT.
+// @Summary      Close account
+// @Description  Closes account (is_blocked=true). Balance must be 0. user_id from JWT.
 // @Tags         client
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        id   path      int  true  "ID счёта"
+// @Param        id   path      int  true  "Account ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -201,13 +201,13 @@ func (h *Handler) closeAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 // transferFromAccount godoc
-// @Summary      Перевод со счёта
-// @Description  Перевод со счёта на другой счёт или вклад (внутри одного пользователя). Указать либо to_account_id, либо to_deposit_id.
+// @Summary      Transfer from account
+// @Description  Transfer from account to another account or deposit (same user). Provide either to_account_id or to_deposit_id.
 // @Tags         client
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        body  body  transferFromAccountRequest  true  "from_account_id, to_account_id или to_deposit_id, amount"
+// @Param        body  body  transferFromAccountRequest  true  "from_account_id, to_account_id or to_deposit_id, amount"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -274,13 +274,13 @@ func (h *Handler) transferFromAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 // getAccountHistory godoc
-// @Summary      История операций по счёту
-// @Description  Возвращает список транзакций по счёту. user_id из JWT. Query: account_id.
+// @Summary      Account history
+// @Description  Returns transactions for the account. user_id from JWT. Query: account_id.
 // @Tags         client
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        account_id  query     int  true  "ID счёта"
+// @Param        account_id  query     int  true  "Account ID"
 // @Success      200  {array}   domain.Transaction
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -323,8 +323,8 @@ func (h *Handler) getAccountHistory(w http.ResponseWriter, r *http.Request) {
 }
 
 // openDeposit godoc
-// @Summary      Открыть вклад
-// @Description  Создаёт вклад в банке с указанной процентной ставкой. Баланс при создании 0.
+// @Summary      Open deposit
+// @Description  Creates a deposit in a bank with given interest rate. Initial balance 0.
 // @Tags         client
 // @Security     BearerAuth
 // @Accept       json
@@ -375,11 +375,11 @@ func (h *Handler) openDeposit(w http.ResponseWriter, r *http.Request) {
 }
 
 // closeDeposit godoc
-// @Summary      Закрыть вклад
-// @Description  Закрывает вклад (is_blocked=true). Баланс должен быть 0.
+// @Summary      Close deposit
+// @Description  Closes deposit (is_blocked=true). Balance must be 0.
 // @Tags         client
 // @Security     BearerAuth
-// @Param        id   path      int  true  "ID вклада"
+// @Param        id   path      int  true  "Deposit ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -429,12 +429,12 @@ func (h *Handler) closeDeposit(w http.ResponseWriter, r *http.Request) {
 }
 
 // transferFromDeposit godoc
-// @Summary      Перевод со вклада
-// @Description  Перевод с вклада на счёт или на другой вклад того же пользователя. Указать ровно один из to_account_id или to_deposit_id.
+// @Summary      Transfer from deposit
+// @Description  Transfer from deposit to account or another deposit (same user). Provide exactly one of to_account_id or to_deposit_id.
 // @Tags         client
 // @Security     BearerAuth
 // @Accept       json
-// @Param        body  body  transferFromDepositRequest  true  "from_deposit_id, to_account_id или to_deposit_id, amount"
+// @Param        body  body  transferFromDepositRequest  true  "from_deposit_id, to_account_id or to_deposit_id, amount"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -516,12 +516,12 @@ func (h *Handler) transferFromDeposit(w http.ResponseWriter, r *http.Request) {
 }
 
 // accumulateDeposit godoc
-// @Summary      Начисление на вклад (пополнение со счёта)
-// @Description  Переводит средства со счёта пользователя на указанный вклад (id в path).
+// @Summary      Accumulate deposit (top-up from account)
+// @Description  Transfers from user account to the deposit (id in path).
 // @Tags         client
 // @Security     BearerAuth
 // @Accept       json
-// @Param        id    path  int  true  "ID вклада (куда пополняем)"
+// @Param        id    path  int  true  "Deposit ID (target)"
 // @Param        body  body  accumulateDepositRequest  true  "from_account_id, amount"
 // @Success      204
 // @Failure      400  {object}  map[string]string
@@ -564,7 +564,6 @@ func (h *Handler) accumulateDeposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Пополнение вклада = перевод со счёта на вклад
 	err = h.services.Account.TransferFromAccount(userID, input.FromAccountID, nil, &depositID, input.Amount)
 	if err != nil {
 		switch err {
@@ -595,8 +594,8 @@ func (h *Handler) accumulateDeposit(w http.ResponseWriter, r *http.Request) {
 }
 
 // applyForSalaryProject godoc
-// @Summary      Подать заявку на зарплатный проект
-// @Description  Создаёт заявку со статусом pending. Только сотрудник предприятия может подать заявку.
+// @Summary      Apply for salary project
+// @Description  Creates application with status pending. Only enterprise employee.
 // @Tags         client
 // @Security     BearerAuth
 // @Accept       json
@@ -654,12 +653,12 @@ func (h *Handler) applyForSalaryProject(w http.ResponseWriter, r *http.Request) 
 }
 
 // receiveSalary godoc
-// @Summary      Получить зарплату
-// @Description  Зачисляет зарплату по одобренной заявке на указанный счёт или вклад (один из to_account_id, to_deposit_id обязателен).
+// @Summary      Receive salary
+// @Description  Credits salary for approved application to given account or deposit (one of to_account_id, to_deposit_id required).
 // @Tags         client
 // @Security     BearerAuth
 // @Accept       json
-// @Param        body  body  receiveSalaryRequest  true  "application_id, to_account_id или to_deposit_id"
+// @Param        body  body  receiveSalaryRequest  true  "application_id, to_account_id or to_deposit_id"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string

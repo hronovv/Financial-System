@@ -15,8 +15,7 @@ func NewAuditLogger(repo repository.ActionLogRepository) *Audit {
 	return &Audit{repo: repo}
 }
 
-// LogAction сохраняет запись о действии пользователя в action_logs.
-// details может быть произвольной структурой, которая сериализуется в JSON.
+// LogAction writes an audit record to action_logs. details is serialized to JSON.
 func (a *Audit) LogAction(userID *int, action string, details any) error {
 	var raw json.RawMessage
 	if details != nil {

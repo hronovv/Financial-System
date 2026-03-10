@@ -15,7 +15,7 @@ const (
 	ContextKeyRole   contextKey = "role"
 )
 
-// authMiddleware проверяет JWT и роль; при успехе кладёт user_id и role в context.
+// authMiddleware validates JWT and role; on success sets user_id and role in context.
 func (h *Handler) authMiddleware(requiredRole string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +48,7 @@ func (h *Handler) authMiddleware(requiredRole string) func(http.Handler) http.Ha
 	}
 }
 
-// userIDFromRequest возвращает user_id из context; 0, если не установлен.
+// userIDFromRequest returns user_id from context; 0 if not set.
 func userIDFromRequest(r *http.Request) int {
 	v, _ := r.Context().Value(ContextKeyUserID).(int)
 	return v

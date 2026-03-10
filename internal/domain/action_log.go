@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// ActionLog описывает запись аудита делового действия.
+// ActionLog is an audit record for a business action.
 type ActionLog struct {
 	ID        int             `json:"id" db:"id"`
 	UserID    *int            `json:"user_id,omitempty" db:"user_id"`

@@ -153,9 +153,7 @@ func (r *SalaryApplicationRepo) PaySalary(applicationID int, toAccountID *int, t
 	return tx.Commit(ctx)
 }
 
-// UndoPaySalary делает логический откат выплаты зарплаты:
-// возвращает сумму на баланс предприятия, списывает её со счёта/вклада клиента,
-// добавляет запись в transactions и переводит заявку в статус pending, обнуляя paid_at.
+// UndoPaySalary reverses a salary payment: credits enterprise, debits account/deposit, logs transaction, sets application to pending.
 func (r *SalaryApplicationRepo) UndoPaySalary(applicationID int, toAccountID *int, toDepositID *int) error {
 	ctx := context.Background()
 	tx, err := r.db.Begin(ctx)
@@ -186,7 +184,6 @@ func (r *SalaryApplicationRepo) UndoPaySalary(applicationID int, toAccountID *in
 		return domain.ErrInvalidTransferTarget
 	}
 
-	// Вернуть деньги на предприятие.
 	if _, err := tx.Exec(ctx,
 		`UPDATE enterprises SET balance = balance + $1 WHERE id = $2`,
 		app.Amount, app.EnterpriseID,
@@ -252,7 +249,6 @@ func (r *SalaryApplicationRepo) UndoPaySalary(applicationID int, toAccountID *in
 		return domain.ErrInvalidTransferTarget
 	}
 
-	// Логируем обратную транзакцию.
 	if _, err := tx.Exec(ctx,
 		`INSERT INTO transactions (from_account_id, from_deposit_id, to_account_id, to_deposit_id, amount, transaction_type)
 		 VALUES ($1, $2, NULL, NULL, $3, $4)`,
@@ -261,7 +257,6 @@ func (r *SalaryApplicationRepo) UndoPaySalary(applicationID int, toAccountID *in
 		return err
 	}
 
-	// Обнуляем paid_at и возвращаем status в pending.
 	if _, err := tx.Exec(ctx,
 		`UPDATE salary_applications
 		 SET status = $1, paid_at = NULL, updated_at = NOW()

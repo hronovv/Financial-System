@@ -15,7 +15,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// NewToken создаёт JWT с user_id и role. Срок жизни — expire (например 24h).
+// NewToken creates a JWT with user_id and role; expire is the token TTL (e.g. 24h).
 func NewToken(secret string, userID int, role string, expire time.Duration) (string, error) {
 	now := time.Now()
 	claims := Claims{
@@ -31,7 +31,7 @@ func NewToken(secret string, userID int, role string, expire time.Duration) (str
 	return token.SignedString([]byte(secret))
 }
 
-// ParseToken проверяет подпись и возвращает claims. При неверном/просроченном токене — ErrInvalidToken.
+// ParseToken verifies the token and returns claims; ErrInvalidToken if invalid or expired.
 func ParseToken(secret string, tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {

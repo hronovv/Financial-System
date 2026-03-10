@@ -16,7 +16,7 @@ func NewAccountService(repo repository.AccountRepository) *Account {
 	return &Account{repo: repo}
 }
 
-// OpenAccount создаёт счёт в указанном банке.
+// OpenAccount creates an account in the given bank.
 func (s *Account) OpenAccount(userID, bankID int) (*domain.Account, error) {
 	accountNumber, err := generateAccountNumber()
 	if err != nil {
@@ -38,7 +38,7 @@ func (s *Account) OpenAccount(userID, bankID int) (*domain.Account, error) {
 	return account, nil
 }
 
-// CloseAccount блокирует счёт. Баланс должен быть нулевым.
+// CloseAccount blocks the account. Balance must be zero.
 func (s *Account) CloseAccount(userID, accountID int) error {
 	acc, err := s.repo.GetAccountByID(accountID)
 	if err != nil {
@@ -60,7 +60,7 @@ func (s *Account) CloseAccount(userID, accountID int) error {
 	return s.repo.SetAccountBlocked(accountID, true)
 }
 
-// TransferFromAccount переводит средства со счёта на счёт или вклад того же пользователя.
+// TransferFromAccount transfers from account to account or deposit of the same user.
 func (s *Account) TransferFromAccount(userID, fromAccountID int, toAccountID, toDepositID *int, amount float64) error {
 	if amount <= 0 {
 		return domain.ErrInvalidAmount
@@ -80,7 +80,7 @@ func (s *Account) TransferFromAccount(userID, fromAccountID int, toAccountID, to
 	return s.repo.TransferAccountToDeposit(userID, fromAccountID, *toDepositID, amount)
 }
 
-// GetAccountHistory возвращает историю операций по счёту.
+// GetAccountHistory returns transaction history for the account.
 func (s *Account) GetAccountHistory(userID, accountID int) ([]domain.Transaction, error) {
 	acc, err := s.repo.GetAccountByID(accountID)
 	if err != nil {

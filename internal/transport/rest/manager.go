@@ -12,11 +12,11 @@ import (
 )
 
 // approveUser godoc
-// @Summary      Подтвердить регистрацию клиента
-// @Description  Устанавливает is_active = true для пользователя с ролью client. После этого клиент может войти по SignIn.
+// @Summary      Approve client registration
+// @Description  Sets is_active = true for user with role client. Client can then sign in.
 // @Tags         manager
 // @Security     BearerAuth
-// @Param        id   path  int  true  "ID пользователя (клиента)"
+// @Param        id   path  int  true  "User (client) ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -64,11 +64,11 @@ func (h *Handler) approveUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // getUserHistory godoc
-// @Summary      История операций пользователя
-// @Description  Объединённая история по всем счетам пользователя (аналогично /client/accounts/history по каждому счёту), отсортировано по дате.
+// @Summary      User transaction history
+// @Description  Merged history for all user accounts, sorted by date.
 // @Tags         manager
 // @Security     BearerAuth
-// @Param        id   path  int  true  "ID пользователя"
+// @Param        id   path  int  true  "User ID"
 // @Success      200  {array}   domain.Transaction
 // @Failure      401  {object}  map[string]string
 // @Failure      404  {object}  map[string]string
@@ -98,7 +98,7 @@ func (h *Handler) getUserHistory(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, history)
 }
 
-// parseAccountIDFromRequest извлекает id счёта из path.
+// parseAccountIDFromRequest extracts account id from path.
 func parseAccountIDFromRequest(r *http.Request) (int, error) {
 	vars := mux.Vars(r)
 	idStr, ok := vars["id"]
@@ -113,10 +113,10 @@ func parseAccountIDFromRequest(r *http.Request) (int, error) {
 }
 
 // blockAccount godoc
-// @Summary      Заблокировать счёт
+// @Summary      Block account
 // @Tags         manager
 // @Security     BearerAuth
-// @Param        id   path  int  true  "ID счёта"
+// @Param        id   path  int  true  "Account ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -151,10 +151,10 @@ func (h *Handler) blockAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 // unblockAccount godoc
-// @Summary      Разблокировать счёт
+// @Summary      Unblock account
 // @Tags         manager
 // @Security     BearerAuth
-// @Param        id   path  int  true  "ID счёта"
+// @Param        id   path  int  true  "Account ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -188,17 +188,17 @@ func (h *Handler) unblockAccount(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// parseDepositIDFromRequest извлекает id вклада из path.
+// parseDepositIDFromRequest extracts deposit id from path.
 func parseDepositIDFromRequest(r *http.Request) (int, error) {
 	return parseIDFromPath(r, "id", "id вклада")
 }
 
 // blockDeposit godoc
-// @Summary      Заблокировать вклад
-// @Description  Менеджер может заблокировать вклад в любой момент (без проверки на баланс).
+// @Summary      Block deposit
+// @Description  Manager can block deposit at any time (no balance check).
 // @Tags         manager
 // @Security     BearerAuth
-// @Param        id   path  int  true  "ID вклада"
+// @Param        id   path  int  true  "Deposit ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -233,10 +233,10 @@ func (h *Handler) blockDeposit(w http.ResponseWriter, r *http.Request) {
 }
 
 // unblockDeposit godoc
-// @Summary      Разблокировать вклад
+// @Summary      Unblock deposit
 // @Tags         manager
 // @Security     BearerAuth
-// @Param        id   path  int  true  "ID вклада"
+// @Param        id   path  int  true  "Deposit ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -270,13 +270,13 @@ func (h *Handler) unblockDeposit(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// addEmployeeToEnterpriseRequest тело запроса POST /manager/enterprises/{id}/employees
+// addEmployeeToEnterpriseRequest is the body for POST /manager/enterprises/{id}/employees.
 type addEmployeeToEnterpriseRequest struct {
 	UserID int `json:"user_id" example:"3"`
 }
 
 // getEnterprisesWithEmployees godoc
-// @Summary      Предприятия с сотрудниками
+// @Summary      Enterprises with employees
 // @Tags         manager
 // @Security     BearerAuth
 // @Success      200  {array}  domain.EnterpriseWithEmployees
@@ -295,11 +295,11 @@ func (h *Handler) getEnterprisesWithEmployees(w http.ResponseWriter, r *http.Req
 }
 
 // addEmployeeToEnterprise godoc
-// @Summary      Добавить сотрудника в предприятие
+// @Summary      Add employee to enterprise
 // @Tags         manager
 // @Security     BearerAuth
 // @Accept       json
-// @Param        id    path  int  true  "ID предприятия"
+// @Param        id    path  int  true  "Enterprise ID"
 // @Param        body  body  addEmployeeToEnterpriseRequest  true  "user_id"
 // @Success      204
 // @Failure      400  {object}  map[string]string
@@ -350,12 +350,12 @@ func (h *Handler) addEmployeeToEnterprise(w http.ResponseWriter, r *http.Request
 }
 
 // removeEmployeeFromEnterprise godoc
-// @Summary      Удалить сотрудника из предприятия
-// @Description  Pending заявки этого сотрудника по предприятию автоматически отклоняются.
+// @Summary      Remove employee from enterprise
+// @Description  Employee's pending applications for this enterprise are rejected.
 // @Tags         manager
 // @Security     BearerAuth
-// @Param        enterprise_id   path  int  true  "ID предприятия"
-// @Param        user_id        path  int  true  "ID пользователя"
+// @Param        enterprise_id   path  int  true  "Enterprise ID"
+// @Param        user_id        path  int  true  "User ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -398,7 +398,7 @@ func (h *Handler) removeEmployeeFromEnterprise(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// parseIDFromPath извлекает числовой id из path по ключу key.
+// parseIDFromPath extracts numeric id from path by key.
 func parseIDFromPath(r *http.Request, key, label string) (int, error) {
 	vars := mux.Vars(r)
 	idStr, ok := vars[key]
@@ -413,11 +413,11 @@ func parseIDFromPath(r *http.Request, key, label string) (int, error) {
 }
 
 // approveSalaryApplication godoc
-// @Summary      Подтвердить заявку на зарплатный проект
-// @Description  Одобряет заявку (status = approved). Баланс предприятия должен быть не меньше суммы заявки.
+// @Summary      Approve salary application
+// @Description  Approves application (status = approved). Enterprise balance must be >= application amount.
 // @Tags         manager
 // @Security     BearerAuth
-// @Param        id   path  int  true  "ID заявки"
+// @Param        id   path  int  true  "Application ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string

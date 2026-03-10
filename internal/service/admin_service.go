@@ -17,25 +17,23 @@ func NewAdminService(logRepo repository.ActionLogRepository) *Admin {
 	return &Admin{logRepo: logRepo}
 }
 
-// GetAllLogs возвращает все записи action_logs в порядке убывания даты.
+// GetAllLogs returns all action_logs ordered by created_at desc.
 func (a *Admin) GetAllLogs() ([]domain.ActionLog, error) {
 	return a.logRepo.GetAll()
 }
 
-// UndoAction выполняет логический откат действия, описанного в action_logs.
+// UndoAction reverts the action described by the log entry (logical undo).
 func (a *Admin) UndoAction(logID int, deps *repository.Repositories) error {
 	ctx := context.Background()
 
-	// Получаем запись под блокировкой.
 	entry, err := a.logRepo.GetByIDForUpdate(ctx, logID)
 	if err != nil {
 		return err
 	}
 	if entry.IsUndone {
-		return domain.ErrApplicationAlreadyPaid // переиспользуем как "уже отменено" (можно завести отдельную ошибку)
+		return domain.ErrActionAlreadyUndone
 	}
 
-	// userID, от имени которого выполнялось исходное действие (если есть).
 	actorUserID := 0
 	if entry.UserID != nil {
 		actorUserID = *entry.UserID
@@ -49,7 +47,6 @@ func (a *Admin) UndoAction(logID int, deps *repository.Repositories) error {
 	}
 
 	switch entry.Action {
-	// CLIENT
 	case "client_open_account":
 		id, ok := details["account_id"].(float64)
 		if !ok {
@@ -97,12 +94,10 @@ func (a *Admin) UndoAction(logID int, deps *repository.Repositories) error {
 			toDepositID = &id
 		}
 		if toAccountID != nil {
-			// undo: с получателя обратно на отправителя
 			if err := deps.Account.TransferAccountToAccount(actorUserID, *toAccountID, fromID, amount); err != nil {
 				return err
 			}
 		} else if toDepositID != nil {
-			// undo: с вклада обратно на счёт
 			if err := deps.Deposit.TransferDepositToAccount(actorUserID, *toDepositID, fromID, amount); err != nil {
 				return err
 			}
@@ -164,7 +159,6 @@ func (a *Admin) UndoAction(logID int, deps *repository.Repositories) error {
 		fromAccountID := int(details["from_account_id"].(float64))
 		depositID := int(details["deposit_id"].(float64))
 		amount := details["amount"].(float64)
-		// undo: вклад -> счёт
 		if err := deps.Deposit.TransferDepositToAccount(actorUserID, depositID, fromAccountID, amount); err != nil {
 			return err
 		}
@@ -178,7 +172,6 @@ func (a *Admin) UndoAction(logID int, deps *repository.Repositories) error {
 		if app.Status != domain.SalaryApplicationStatusPending || app.PaidAt != nil {
 			return errors.New("cannot undo: application is not pending or already paid")
 		}
-		// мягкий undo: пометить rejected
 		if err := deps.SalaryApplication.UpdateStatus(appID, domain.SalaryApplicationStatusRejected); err != nil {
 			return err
 		}
@@ -198,7 +191,6 @@ func (a *Admin) UndoAction(logID int, deps *repository.Repositories) error {
 			return err
 		}
 
-	// MANAGER
 	case "manager_approve_user":
 		userID := int(details["target_user_id"].(float64))
 		user, err := deps.User.GetUserByID(userID)
@@ -214,29 +206,41 @@ func (a *Admin) UndoAction(logID int, deps *repository.Repositories) error {
 
 	case "manager_block_account":
 		accountID := int(details["account_id"].(float64))
-		return deps.Account.SetAccountBlocked(accountID, false)
+		if err := deps.Account.SetAccountBlocked(accountID, false); err != nil {
+			return err
+		}
 
 	case "manager_unblock_account":
 		accountID := int(details["account_id"].(float64))
-		return deps.Account.SetAccountBlocked(accountID, true)
+		if err := deps.Account.SetAccountBlocked(accountID, true); err != nil {
+			return err
+		}
 
 	case "manager_block_deposit":
 		depositID := int(details["deposit_id"].(float64))
-		return deps.Deposit.SetDepositBlocked(depositID, false)
+		if err := deps.Deposit.SetDepositBlocked(depositID, false); err != nil {
+			return err
+		}
 
 	case "manager_unblock_deposit":
 		depositID := int(details["deposit_id"].(float64))
-		return deps.Deposit.SetDepositBlocked(depositID, true)
+		if err := deps.Deposit.SetDepositBlocked(depositID, true); err != nil {
+			return err
+		}
 
 	case "manager_add_employee":
 		enterpriseID := int(details["enterprise_id"].(float64))
 		userID := int(details["user_id"].(float64))
-		return deps.Enterprise.RemoveEmployee(enterpriseID, userID)
+		if err := deps.Enterprise.RemoveEmployee(enterpriseID, userID); err != nil {
+			return err
+		}
 
 	case "manager_remove_employee":
 		enterpriseID := int(details["enterprise_id"].(float64))
 		userID := int(details["user_id"].(float64))
-		return deps.Enterprise.AddEmployee(enterpriseID, userID)
+		if err := deps.Enterprise.AddEmployee(enterpriseID, userID); err != nil {
+			return err
+		}
 
 	case "manager_approve_salary_application":
 		appID := int(details["application_id"].(float64))

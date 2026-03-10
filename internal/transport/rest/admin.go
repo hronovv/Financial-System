@@ -10,8 +10,8 @@ import (
 )
 
 // getAllLogs godoc
-// @Summary      Все логи действий
-// @Description  Возвращает все записи action_logs в порядке убывания времени.
+// @Summary      All action logs
+// @Description  Returns all action_logs ordered by created_at desc.
 // @Tags         admin
 // @Security     BearerAuth
 // @Produce      json
@@ -32,10 +32,11 @@ func (h *Handler) getAllLogs(w http.ResponseWriter, r *http.Request) {
 }
 
 // undoAction godoc
-// @Summary      Отменить действие
+// @Summary      Undo action
+// @Description  Logical undo of the action by log entry. Not for auth_sign_up/auth_sign_in.
 // @Tags         admin
 // @Security     BearerAuth
-// @Param        id   path  int  true  "ID записи лога"
+// @Param        id   path  int  true  "Log entry ID"
 // @Success      204
 // @Failure      400  {object}  map[string]string
 // @Failure      401  {object}  map[string]string
@@ -59,6 +60,8 @@ func (h *Handler) undoAction(w http.ResponseWriter, r *http.Request) {
 		switch err {
 		case domain.ErrNotFound:
 			respondError(w, http.StatusNotFound, "запись лога не найдена")
+		case domain.ErrActionAlreadyUndone:
+			respondError(w, http.StatusBadRequest, "действие уже было отменено")
 		default:
 			respondError(w, http.StatusBadRequest, err.Error())
 		}

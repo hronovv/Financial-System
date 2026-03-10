@@ -23,6 +23,7 @@ var (
 	ErrNotEmployee              = errors.New("user is not an employee of this enterprise")
 	ErrApplicationNotPending    = errors.New("application is not pending")
 	ErrApplicationNotApproved   = errors.New("application is not approved or already paid")
-	ErrApplicationAlreadyPaid   = errors.New("salary for this application was already paid")
+	ErrApplicationAlreadyPaid        = errors.New("salary for this application was already paid")
 	ErrInsufficientEnterpriseBalance = errors.New("enterprise has insufficient balance")
+	ErrActionAlreadyUndone           = errors.New("action has already been undone")
 )

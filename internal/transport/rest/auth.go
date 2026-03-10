@@ -8,19 +8,19 @@ import (
 	"financial_system/internal/domain"
 )
 
-// authInputDTO тело запроса для sign-up и sign-in
+// authInputDTO is the request body for sign-up and sign-in.
 type authInputDTO struct {
 	Email    string `json:"email" example:"user@example.com"`
 	Password string `json:"password" example:"password123"`
 }
 
 // signUp godoc
-// @Summary      Регистрация клиента
-// @Description  Регистрация нового клиента. Требует подтверждения менеджером (is_active).
+// @Summary      Client registration
+// @Description  Register new client. Requires manager approval (is_active).
 // @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        body  body  authInputDTO  true  "email, password (мин. 8 символов)"
+// @Param        body  body  authInputDTO  true  "email, password (min 8 chars)"
 // @Success      201  {object}  map[string]string
 // @Failure      400  {object}  map[string]string
 // @Failure      500  {object}  map[string]string
@@ -60,8 +60,8 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 }
 
 // signIn godoc
-// @Summary      Вход
-// @Description  Вход по email и паролю. Возвращает JWT для заголовка Authorization: Bearer &lt;token&gt;. Аккаунт должен быть подтверждён (is_active).
+// @Summary      Sign in
+// @Description  Sign in with email and password. Returns JWT for Authorization: Bearer &lt;token&gt;. Account must be approved (is_active).
 // @Tags         auth
 // @Accept       json
 // @Produce      json
